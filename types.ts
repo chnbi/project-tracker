@@ -13,6 +13,7 @@ export interface Project {
   name: string;
   category: string; 
   subCategory?: string;
+  status: Status;
   updates: Update[];
 }
 

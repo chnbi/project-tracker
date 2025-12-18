@@ -31,6 +31,7 @@ export const PROJECTS: Project[] = [
     name: 'YOS and CDN Revamp - Switch to Yes',
     category: 'yos',
     subCategory: '5g',
+    status: 'In Progress',
     updates: [
       {
         id: 'u1',
@@ -52,6 +53,7 @@ export const PROJECTS: Project[] = [
     id: 'p2',
     name: 'Broadband Page Card',
     category: 'yes.my',
+    status: 'Blocker',
     updates: [
       {
         id: 'u2',
@@ -73,6 +75,7 @@ export const PROJECTS: Project[] = [
     id: 'p3',
     name: 'MyDigital ID Integration',
     category: 'cdn',
+    status: 'IoT',
     updates: [
       {
         id: 'u5',
@@ -87,6 +90,7 @@ export const PROJECTS: Project[] = [
     id: 'p4',
     name: 'Newsroom CMS Update',
     category: 'ydbp',
+    status: 'Live',
     updates: [
       {
         id: 'u6',

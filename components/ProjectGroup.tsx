@@ -61,10 +61,13 @@ export const ProjectGroup: React.FC<ProjectGroupProps> = ({ project, forceExpand
         className="flex items-center justify-between cursor-pointer group select-none mb-4"
       >
         <div className="flex flex-col">
-          <h2 className="text-xl font-semibold tracking-tight text-primary group-hover:text-black transition-colors">
-            {project.name}
-          </h2>
-          <div className="text-[10px] font-mono text-secondary uppercase tracking-wider mt-1">
+          <div className="flex items-center gap-3">
+             <div className={`w-3 h-3 rounded-full ${getStatusColor(project.status)}`} />
+             <h2 className="text-xl font-semibold tracking-tight text-primary group-hover:text-black transition-colors">
+               {project.name}
+             </h2>
+          </div>
+          <div className="text-[10px] font-mono text-secondary uppercase tracking-wider mt-1.5 ml-[24px]">
             {project.category} {project.subCategory && `/ ${project.subCategory}`}
           </div>
         </div>

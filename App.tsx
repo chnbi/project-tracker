@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>('yos');
   const [selectedL3, setSelectedL3] = useState<string>('5g');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // -- Filter Logic --
@@ -24,23 +25,53 @@ const App: React.FC = () => {
     return parent?.children || [];
   }, [selectedL1, level1Items]);
 
-  const level3Items = useMemo(() => {
-    const parent = level2Items.find(i => i.id === selectedL2);
-    return parent?.children || [];
-  }, [selectedL2, level2Items]);
+    const level3Items = useMemo(() => {
 
-  const handleL1Select = (id: string) => {
-    setSelectedL1(id);
-    const nextL2 = FILTERS.find(f => f.id === id)?.children?.[0]?.id || null;
-    setSelectedL2(nextL2 || '');
-    
-    if (nextL2) {
-       const l2Node = FILTERS.find(f => f.id === id)?.children?.find(c => c.id === nextL2);
-       setSelectedL3(l2Node?.children?.[0]?.id || '');
-    } else {
-        setSelectedL3('');
-    }
-  };
+      const parent = level2Items.find(i => i.id === selectedL2);
+
+      return parent?.children || [];
+
+    }, [selectedL2, level2Items]);
+
+  
+
+    const statusItems = useMemo(() => {
+
+      const allStatuses = PROJECTS.map(p => p.status);
+
+      const uniqueStatuses = [...new Set(allStatuses)];
+
+      const statusNodes: FilterNode[] = uniqueStatuses.map(s => ({ id: s, label: s }));
+
+      return [{ id: 'all', label: 'All' }, ...statusNodes];
+
+    }, []);
+
+  
+
+    const handleL1Select = (id: string) => {
+
+      setSelectedL1(id);
+
+      const nextL2 = FILTERS.find(f => f.id === id)?.children?.[0]?.id || null;
+
+      setSelectedL2(nextL2 || '');
+
+      
+
+      if (nextL2) {
+
+         const l2Node = FILTERS.find(f => f.id === id)?.children?.find(c => c.id === nextL2);
+
+         setSelectedL3(l2Node?.children?.[0]?.id || '');
+
+      } else {
+
+          setSelectedL3('');
+
+      }
+
+    };
 
   const handleL2Select = (id: string) => {
     setSelectedL2(id);
@@ -63,6 +94,12 @@ const App: React.FC = () => {
                  matchesCategory = matchesCategory && project.subCategory.includes(selectedL3.split(' ')[0].toLowerCase());
              }
           }
+      }
+
+      if (selectedL1 === 'status') {
+        if (selectedStatus && selectedStatus !== 'all') {
+          matchesCategory = project.status === selectedStatus;
+        }
       }
 
       if (!matchesCategory) return null;
@@ -125,7 +162,7 @@ const App: React.FC = () => {
              />
              <ConnectorLine 
                 fromIndex={getIndex(level1Items, selectedL1)}
-                toIndex={0}
+                toIndex={getIndex(level2Items, selectedL2)}
                 isActive={level2Items.length > 0}
                 rowHeight={ROW_HEIGHT}
                 columnGap={COL_GAP}
@@ -143,7 +180,7 @@ const App: React.FC = () => {
               />
               <ConnectorLine 
                 fromIndex={getIndex(level2Items, selectedL2)}
-                toIndex={0}
+                toIndex={getIndex(level3Items, selectedL3)}
                 isActive={level3Items.length > 0}
                 rowHeight={ROW_HEIGHT}
                 columnGap={COL_GAP}
@@ -161,6 +198,18 @@ const App: React.FC = () => {
                   levelIndex={2}
                 />
              </div>
+          )}
+
+          {selectedL1 === 'status' && (
+            <div className="relative">
+              <FilterColumn
+                title="Status"
+                items={statusItems}
+                selectedId={selectedStatus}
+                onSelect={setSelectedStatus}
+                levelIndex={1}
+              />
+            </div>
           )}
         </div>
       </section>

@@ -23,7 +23,7 @@ export const ConnectorLine: React.FC<ConnectorLineProps> = ({
   const offset = 56; 
 
   const startY = offset + (fromIndex * rowHeight) + (rowHeight / 2);
-  const endY = offset + (0 * rowHeight) + (rowHeight / 2); // Connects to first item level roughly
+  const endY = offset + (toIndex * rowHeight) + (rowHeight / 2); // Connects to first item level roughly
   
   const midX = columnGap / 2;
   const endX = columnGap;
