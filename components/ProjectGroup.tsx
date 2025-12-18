@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Project, Update } from '../types';
+import { useProjects } from '../contexts/ProjectContext';
+import { ChevronDown, ChevronUp, Trash, Plus } from 'lucide-react';
+import { Project, Update, Status } from '../types';
 
 interface ProjectGroupProps {
   project: Project;
@@ -39,13 +39,23 @@ const UpdateRow: React.FC<{ update: Update }> = ({ update }) => (
 );
 
 export const ProjectGroup: React.FC<ProjectGroupProps> = ({ project, forceExpand = false }) => {
+  const { addUpdate, deleteProject } = useProjects();
   const [isExpanded, setIsExpanded] = useState(forceExpand);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newUpdate, setNewUpdate] = useState({ description: '', person: '', status: 'In Progress' as Status });
 
   useEffect(() => {
     if (forceExpand) setIsExpanded(true);
   }, [forceExpand]);
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
+
+  const handleAddUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    addUpdate(project.id, newUpdate);
+    setShowAddForm(false);
+    setNewUpdate({ description: '', person: '', status: 'In Progress' as Status });
+  };
 
   // Sorting updates by date (assuming ISO or standard format, but for now strictly taking index 0 as latest based on data structure)
   // Data is provided latest first in constants, so we use index 0.
@@ -72,10 +82,53 @@ export const ProjectGroup: React.FC<ProjectGroupProps> = ({ project, forceExpand
           </div>
         </div>
         
-        <div className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors">
-          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        <div className="flex items-center gap-2">
+          <button onClick={(e) => { e.stopPropagation(); setShowAddForm(!showAddForm); }} className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors">
+            <Plus size={18} />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); deleteProject(project.id); }} className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-red-200 transition-colors text-red-500">
+            <Trash size={18} />
+          </button>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors">
+            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
         </div>
       </div>
+
+      {showAddForm && (
+        <form onSubmit={handleAddUpdate} className="mb-4 p-4 bg-white rounded-lg shadow">
+          <textarea
+            value={newUpdate.description}
+            onChange={(e) => setNewUpdate({ ...newUpdate, description: e.target.value })}
+            placeholder="Update description"
+            className="w-full p-2 border rounded mb-2"
+            required
+          />
+          <input
+            type="text"
+            value={newUpdate.person}
+            onChange={(e) => setNewUpdate({ ...newUpdate, person: e.target.value })}
+            placeholder="Person"
+            className="w-full p-2 border rounded mb-2"
+            required
+          />
+          <select
+            value={newUpdate.status}
+            onChange={(e) => setNewUpdate({ ...newUpdate, status: e.target.value as Status })}
+            className="w-full p-2 border rounded mb-2"
+          >
+            <option value="Pending Update">Pending Update</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Review">Review</option>
+            <option value="Blocker">Blocker</option>
+            <option value="QA">QA</option>
+            <option value="IoT">IoT</option>
+            <option value="Live">Live</option>
+          </select>
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Add</button>
+        </form>
+      )}
 
       {/* Column Headers */}
       <div className="grid grid-cols-12 gap-4 px-2 py-2 text-[10px] font-mono text-secondary uppercase tracking-widest opacity-60 border-b border-gray-200 mb-2">

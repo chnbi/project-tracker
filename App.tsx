@@ -1,6 +1,4 @@
-import React, { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
-import { FILTERS, PROJECTS } from './constants';
+import { useProjects } from './contexts/ProjectContext';
 import { FilterNode, Project } from './types';
 import { FilterColumn } from './components/FilterColumn';
 import { ConnectorLine } from './components/ConnectorLine';
@@ -10,6 +8,7 @@ const ROW_HEIGHT = 32;
 const COL_GAP = 120; 
 
 const App: React.FC = () => {
+  const { projects } = useProjects();
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>('yos');
   const [selectedL3, setSelectedL3] = useState<string>('5g');
@@ -37,7 +36,7 @@ const App: React.FC = () => {
 
     const statusItems = useMemo(() => {
 
-      const allStatuses = PROJECTS.map(p => p.status);
+      const allStatuses = projects.map(p => p.status);
 
       const uniqueStatuses = [...new Set(allStatuses)];
 
@@ -45,7 +44,7 @@ const App: React.FC = () => {
 
       return [{ id: 'all', label: 'All' }, ...statusNodes];
 
-    }, []);
+    }, [projects]);
 
   
 
@@ -82,7 +81,7 @@ const App: React.FC = () => {
   // -- Data Filtering Logic --
 
   const filteredProjects = useMemo(() => {
-    return PROJECTS.map(project => {
+    return projects.map(project => {
       // 1. Filter by Categories
       let matchesCategory = true;
       if (selectedL1 === 'project') {
@@ -139,7 +138,10 @@ const App: React.FC = () => {
   }, [searchQuery, selectedL1, selectedL2, selectedL3, level3Items]);
 
 
-  const getIndex = (items: FilterNode[], id: string | null) => items.findIndex(i => i.id === id);
+  const getIndex = (items: FilterNode[], id: string | null) => {
+     const idx = items.findIndex(i => i.id === id);
+     return idx === -1 ? 0 : idx;
+  };
 
   return (
     <div className="min-h-screen font-sans bg-background text-primary selection:bg-gray-200 p-8 md:p-12 lg:p-16">

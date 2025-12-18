@@ -28,3 +28,23 @@ export interface FilterState {
   level2: string | null;
   level3: string | null;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  login: (name: string, email: string) => void;
+  logout: () => void;
+}
+
+export interface ProjectContextType {
+  projects: Project[];
+  addProject: (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string }) => void;
+  updateProject: (id: string, data: Partial<Project>) => void;
+  deleteProject: (id: string) => void;
+  addUpdate: (projectId: string, updateData: Omit<Update, 'id' | 'date'>) => void;
+}
