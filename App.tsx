@@ -1,19 +1,42 @@
+import React, { useState, useMemo } from 'react';
+import { Search, Plus, LogIn, LogOut } from 'lucide-react';
+import { FILTERS } from './constants';
 import { useProjects } from './contexts/ProjectContext';
-import { FilterNode, Project } from './types';
+import { useAuth } from './contexts/AuthContext';
+import { FilterNode, Project, Status } from './types';
 import { FilterColumn } from './components/FilterColumn';
 import { ConnectorLine } from './components/ConnectorLine';
 import { ProjectGroup } from './components/ProjectGroup';
 
-const ROW_HEIGHT = 32; 
-const COL_GAP = 120; 
+const ROW_HEIGHT = 32;
+const COL_GAP = 120;
 
 const App: React.FC = () => {
-  const { projects } = useProjects();
+  const { projects, addProject } = useProjects();
+  const { user, login, logout } = useAuth();
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>('yos');
   const [selectedL3, setSelectedL3] = useState<string>('5g');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [newProject, setNewProject] = useState({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status });
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginForm, setLoginForm] = useState({ name: '', email: '' });
+
+  const handleAddProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    addProject(newProject);
+    setShowAddProject(false);
+    setNewProject({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status });
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    login(loginForm.name, loginForm.email);
+    setShowLogin(false);
+    setLoginForm({ name: '', email: '' });
+  };
 
   // -- Filter Logic --
 
@@ -81,6 +104,10 @@ const App: React.FC = () => {
   // -- Data Filtering Logic --
 
   const filteredProjects = useMemo(() => {
+    console.log('projects', projects);
+    console.log('selectedL1', selectedL1);
+    console.log('selectedL2', selectedL2);
+    console.log('selectedL3', selectedL3);
     return projects.map(project => {
       // 1. Filter by Categories
       let matchesCategory = true;
@@ -135,7 +162,7 @@ const App: React.FC = () => {
       };
     }).filter((p): p is Project => p !== null);
 
-  }, [searchQuery, selectedL1, selectedL2, selectedL3, level3Items]);
+  }, [searchQuery, selectedL1, selectedL2, selectedL3, projects, selectedStatus, level3Items, user]);
 
 
   const getIndex = (items: FilterNode[], id: string | null) => {
@@ -146,9 +173,57 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen font-sans bg-background text-primary selection:bg-gray-200 p-8 md:p-12 lg:p-16">
       
-      <header className="mb-20">
+      <header className="mb-12 flex justify-between items-center">
         <h1 className="text-xl font-bold tracking-tight">minus one</h1>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+              <button onClick={logout} className="flex items-center gap-2 text-sm bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors">
+                <LogOut size={16} />
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setShowLogin(!showLogin)} className="flex items-center gap-2 text-sm bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors">
+              <LogIn size={16} />
+              Login
+            </button>
+          )}
+          <button onClick={() => setShowAddProject(!showAddProject)} className="flex items-center gap-2 text-sm bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors">
+            <Plus size={16} />
+            Add Project
+          </button>
+        </div>
       </header>
+
+      {showLogin && !user && (
+        <div className="mb-12 p-6 bg-white rounded-xl shadow-lg">
+          <h2 className="text-lg font-semibold mb-4">Login</h2>
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <input
+              type="text"
+              value={loginForm.name}
+              onChange={(e) => setLoginForm({ ...loginForm, name: e.target.value })}
+              placeholder="Name"
+              className="p-3 border rounded-lg"
+              required
+            />
+            <input
+              type="email"
+              value={loginForm.email}
+              onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+              placeholder="Email"
+              className="p-3 border rounded-lg"
+              required
+            />
+            <div className="flex justify-end gap-3 mt-2">
+              <button type="button" onClick={() => setShowLogin(false)} className="text-gray-600">Cancel</button>
+              <button type="submit" className="bg-blue-500 text-white px-5 py-2 rounded-lg hover:bg-blue-600">Login</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Filters */}
       <section className="relative mb-24 overflow-x-auto no-scrollbar">

@@ -1,6 +1,7 @@
 import { useProjects } from '../contexts/ProjectContext';
 import { ChevronDown, ChevronUp, Trash, Plus } from 'lucide-react';
 import { Project, Update, Status } from '../types';
+import { useState, useEffect } from 'react';
 
 interface ProjectGroupProps {
   project: Project;

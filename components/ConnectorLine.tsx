@@ -11,6 +11,7 @@ interface ConnectorLineProps {
 
 export const ConnectorLine: React.FC<ConnectorLineProps> = ({ 
   fromIndex, 
+  toIndex,
   rowHeight, 
   columnGap,
   isActive,
