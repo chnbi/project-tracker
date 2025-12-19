@@ -46,6 +46,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       name: data.name,
       category: data.category,
       subCategory: data.subCategory,
+      status: data.initialStatus,
       updates: [newUpdate]
     };
 
