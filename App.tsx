@@ -43,136 +43,138 @@ const App: React.FC = () => {
   const level1Items = FILTERS;
 
   const level2Items = useMemo(() => {
+    // 1. Static Hierarchy (Project > Category)
     const parent = level1Items.find(i => i.id === selectedL1);
-    return parent?.children || [];
-  }, [selectedL1, level1Items]);
+    if (parent?.children && parent.children.length > 0) {
+      return parent.children;
+    }
 
-    const level3Items = useMemo(() => {
-
-      const parent = level2Items.find(i => i.id === selectedL2);
-
-      return parent?.children || [];
-
-    }, [selectedL2, level2Items]);
-
-  
-
-    const statusItems = useMemo(() => {
-
+    // 2. Dynamic Hierarchies
+    if (selectedL1 === 'status') {
       const allStatuses = projects.map(p => p.status);
-
       const uniqueStatuses = [...new Set(allStatuses)];
+      return [{ id: 'all', label: 'All' }, ...uniqueStatuses.map(s => ({ id: s, label: s }))];
+    }
 
-      const statusNodes: FilterNode[] = uniqueStatuses.map(s => ({ id: s, label: s }));
+    if (selectedL1 === 'person_filter') {
+      const allPersons = projects.flatMap(p => p.updates.map(u => u.person));
+      const uniquePersons = [...new Set(allPersons)].sort();
+      return [{ id: 'all', label: 'All' }, ...uniquePersons.map(p => ({ id: p, label: p }))];
+    }
 
-      return [{ id: 'all', label: 'All' }, ...statusNodes];
+    return [];
+  }, [selectedL1, level1Items, projects]);
 
-    }, [projects]);
 
-  
+  const level3Items = useMemo(() => {
+    // 1. Static Hierarchy (Category > SubCategory)
+    const parentL2 = level2Items.find(i => i.id === selectedL2);
+    if (parentL2?.children && parentL2.children.length > 0) {
+      return parentL2.children;
+    }
 
-    const handleL1Select = (id: string) => {
+    // 2. Dynamic Hierarchies (Status/Person > Projects)
+    if (selectedL1 === 'status' && selectedL2) {
+      return projects
+        .filter(p => p.status === selectedL2)
+        .map(p => ({ id: p.id, label: p.name }));
+    }
 
-      setSelectedL1(id);
+    if (selectedL1 === 'person_filter' && selectedL2) {
+      return projects
+        .filter(p => p.updates.some(u => u.person === selectedL2))
+        .map(p => ({ id: p.id, label: p.name }));
+    }
 
-      const nextL2 = FILTERS.find(f => f.id === id)?.children?.[0]?.id || null;
+    return [];
+  }, [selectedL2, level2Items, selectedL1, projects]);
 
-      setSelectedL2(nextL2 || '');
-
-      
-
-      if (nextL2) {
-
-         const l2Node = FILTERS.find(f => f.id === id)?.children?.find(c => c.id === nextL2);
-
-         setSelectedL3(l2Node?.children?.[0]?.id || '');
-
-      } else {
-
-          setSelectedL3('');
-
-      }
-
-    };
-
-  const handleL2Select = (id: string) => {
-    setSelectedL2(id);
-    const parent = level2Items.find(i => i.id === id);
-    setSelectedL3(parent?.children?.[0]?.id || '');
-  };
-
-  // -- Data Filtering Logic --
 
   const filteredProjects = useMemo(() => {
-    console.log('projects', projects);
-    console.log('selectedL1', selectedL1);
-    console.log('selectedL2', selectedL2);
-    console.log('selectedL3', selectedL3);
-    return projects.map(project => {
-      // 1. Filter by Categories
-      let matchesCategory = true;
-      if (selectedL1 === 'project') {
-          if (selectedL2 && selectedL2 !== 'all') {
-             matchesCategory = matchesCategory && project.category === selectedL2;
-          }
-          if (selectedL3 && selectedL3 !== 'all' && level3Items.length > 0) {
-             if (project.subCategory) {
-                 matchesCategory = matchesCategory && project.subCategory.includes(selectedL3.split(' ')[0].toLowerCase());
-             }
-          }
-      }
+    console.log('Filtering:', { selectedL1, selectedL2, selectedL3 });
 
-      if (selectedL1 === 'status') {
-        if (selectedStatus && selectedStatus !== 'all') {
-          matchesCategory = project.status === selectedStatus;
+    return projects.map(project => {
+      let isMatch = true;
+
+      // -- L1/L2/L3 Filtering --
+      if (selectedL1 === 'project') {
+        // L2 = Category, L3 = SubCategory
+        if (selectedL2 && selectedL2 !== 'all') {
+          isMatch = isMatch && project.category === selectedL2;
+        }
+        if (selectedL3 && selectedL3 !== 'all') {
+          // If L3 corresponds to SubCategory in FILTERS
+          // We need to check if the project matches that subcategory.
+          // Note: In constants.ts, subcategories are like '5g', 'revamp'
+          if (project.subCategory) {
+            // Simple loose matching based on existing logic
+            isMatch = isMatch && project.subCategory.toLowerCase().includes(selectedL3.split(' ')[0].toLowerCase());
+          }
+        }
+      }
+      else if (selectedL1 === 'status') {
+        // L2 = Status, L3 = Project
+        if (selectedL2 && selectedL2 !== 'all') {
+          isMatch = isMatch && project.status === selectedL2;
+        }
+        if (selectedL3 && selectedL3 !== 'all') {
+          isMatch = isMatch && project.id === selectedL3;
+        }
+      }
+      else if (selectedL1 === 'person_filter') {
+        // L2 = Person, L3 = Project
+        if (selectedL2 && selectedL2 !== 'all') {
+          isMatch = isMatch && project.updates.some(u => u.person === selectedL2);
+        }
+        if (selectedL3 && selectedL3 !== 'all') {
+          isMatch = isMatch && project.id === selectedL3;
         }
       }
 
-      if (!matchesCategory) return null;
+      if (!isMatch) return null;
 
-      // 2. Filter by Search Query
+      // -- Search Query Filtering --
       const query = searchQuery.toLowerCase();
+      if (!query) return project;
+
       const projectMatches = project.name.toLowerCase().includes(query);
-      
-      const matchingUpdates = project.updates.filter(u => 
-        u.description.toLowerCase().includes(query) || 
+
+      const matchingUpdates = project.updates.filter(u =>
+        u.description.toLowerCase().includes(query) ||
         u.person.toLowerCase().includes(query)
       );
 
-      // If search is empty, return all updates. 
-      // If search active: 
-      //   - if project title matches, show all
-      //   - if updates match, show matching
-      
-      let finalUpdates = project.updates;
-      
-      if (query.length > 0) {
-        if (projectMatches) {
-            finalUpdates = project.updates;
-        } else {
-            finalUpdates = matchingUpdates;
-        }
+      if (projectMatches) return project;
+      if (matchingUpdates.length > 0) {
+        return { ...project, updates: matchingUpdates };
       }
 
-      if (finalUpdates.length === 0) return null;
-
-      return {
-        ...project,
-        updates: finalUpdates
-      };
+      return null;
     }).filter((p): p is Project => p !== null);
 
-  }, [searchQuery, selectedL1, selectedL2, selectedL3, projects, selectedStatus, level3Items, user]);
+  }, [searchQuery, selectedL1, selectedL2, selectedL3, projects, level3Items]);
+
+  const handleL1Select = (id: string) => {
+    setSelectedL1(id);
+    // Reset subsequent levels
+    setSelectedL2('');
+    setSelectedL3('');
+  };
+
+  const handleL2Select = (id: string) => {
+    setSelectedL2(id);
+    setSelectedL3('');
+  };
 
 
   const getIndex = (items: FilterNode[], id: string | null) => {
-     const idx = items.findIndex(i => i.id === id);
-     return idx === -1 ? 0 : idx;
+    const idx = items.findIndex(i => i.id === id);
+    return idx === -1 ? 0 : idx;
   };
 
   return (
     <div className="min-h-screen font-sans bg-background text-primary selection:bg-gray-200 p-8 md:p-12 lg:p-16">
-      
+
       <header className="mb-12 flex justify-between items-center">
         <h1 className="text-xl font-bold tracking-tight">minus one</h1>
         <div className="flex items-center gap-4">
@@ -228,66 +230,56 @@ const App: React.FC = () => {
       {/* Filters */}
       <section className="relative mb-24 overflow-x-auto no-scrollbar">
         <div className="flex flex-nowrap gap-[120px] min-w-max pb-8 relative">
-          
+
           <div className="relative">
-             <FilterColumn 
-               title="Filter" 
-               items={level1Items} 
-               selectedId={selectedL1} 
-               onSelect={handleL1Select}
-               levelIndex={0}
-             />
-             <ConnectorLine 
-                fromIndex={getIndex(level1Items, selectedL1)}
-                toIndex={getIndex(level2Items, selectedL2)}
-                isActive={level2Items.length > 0}
-                rowHeight={ROW_HEIGHT}
-                columnGap={COL_GAP}
-             />
+            <FilterColumn
+              title="Filter"
+              items={level1Items}
+              selectedId={selectedL1}
+              onSelect={handleL1Select}
+              levelIndex={0}
+            />
+            <ConnectorLine
+              fromIndex={getIndex(level1Items, selectedL1)}
+              toIndex={getIndex(level2Items, selectedL2)}
+              isActive={level2Items.length > 0}
+              rowHeight={ROW_HEIGHT}
+              columnGap={COL_GAP}
+            />
           </div>
 
           {level2Items.length > 0 && (
             <div className="relative">
-              <FilterColumn 
-                title="Items" 
-                items={level2Items} 
-                selectedId={selectedL2} 
+              <FilterColumn
+                title="Items"
+                items={level2Items}
+                selectedId={selectedL2}
                 onSelect={handleL2Select}
                 levelIndex={1}
               />
-              <ConnectorLine 
+              <ConnectorLine
                 fromIndex={getIndex(level2Items, selectedL2)}
                 toIndex={getIndex(level3Items, selectedL3)}
                 isActive={level3Items.length > 0}
                 rowHeight={ROW_HEIGHT}
                 columnGap={COL_GAP}
-             />
+              />
             </div>
           )}
 
           {level3Items.length > 0 && (
-             <div className="relative">
-                <FilterColumn 
-                  title="Sub-items" 
-                  items={level3Items} 
-                  selectedId={selectedL3} 
-                  onSelect={setSelectedL3}
-                  levelIndex={2}
-                />
-             </div>
-          )}
-
-          {selectedL1 === 'status' && (
             <div className="relative">
               <FilterColumn
-                title="Status"
-                items={statusItems}
-                selectedId={selectedStatus}
-                onSelect={setSelectedStatus}
-                levelIndex={1}
+                title="Sub-items"
+                items={level3Items}
+                selectedId={selectedL3}
+                onSelect={setSelectedL3}
+                levelIndex={2}
               />
             </div>
           )}
+
+
         </div>
       </section>
 
@@ -307,13 +299,13 @@ const App: React.FC = () => {
         <div className="w-full">
           {filteredProjects.length > 0 ? (
             <div className="flex flex-col">
-               {filteredProjects.map((project) => (
-                 <ProjectGroup 
-                    key={project.id} 
-                    project={project} 
-                    forceExpand={searchQuery.length > 0}
-                 />
-               ))}
+              {filteredProjects.map((project) => (
+                <ProjectGroup
+                  key={project.id}
+                  project={project}
+                  forceExpand={searchQuery.length > 0}
+                />
+              ))}
             </div>
           ) : (
             <div className="py-20 text-gray-400 text-sm font-mono">
