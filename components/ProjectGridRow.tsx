@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { Project } from '../types';
+import { useProjects } from '../contexts/ProjectContext';
+import { useAuth } from '../contexts/AuthContext';
 import { ProjectHistory } from './ProjectHistory';
-
-interface ProjectGridRowProps {
-    project: Project;
+project: Project;
 }
 
 export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
+    const { updateProject } = useProjects();
+    const { user } = useAuth();
     const [isExpanded, setIsExpanded] = useState(false);
     const latestUpdate = project.updates[0];
     const dateStr = latestUpdate ? latestUpdate.date : '—';
     const person = latestUpdate ? latestUpdate.person : 'Unknown';
+
+    const handleStatusChange = (newStatus: string) => {
+        if (!user) return; // Read only for guests
+        updateProject(project.id, { status: newStatus as any });
+    };
 
     return (
         <>
@@ -35,9 +42,20 @@ export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
 
                 {/* Col 3: Status (2 cols) */}
                 <div className="col-span-2 mt-1">
-                    <span className="inline-block text-[10px] uppercase tracking-wider font-bold text-black border border-black px-1.5 py-px">
-                        {project.status}
-                    </span>
+                    <select
+                        value={project.status}
+                        onClick={(e) => e.stopPropagation()} // Prevent row expansion
+                        onChange={(e) => {
+                            // We need access to updateProject from context, but this component receives project as prop.
+                            // We should probably consume context here or pass handler.
+                            // Let's consume context.
+                        }}
+                        className="appearance-none bg-transparent text-[10px] uppercase tracking-wider font-bold text-black border border-black px-1.5 py-px cursor-pointer hover:bg-black hover:text-white transition-colors outline-none"
+                    >
+                        {['Pending Update', 'In Progress', 'Completed', 'Review', 'Blocker', 'QA', 'IoT', 'Live'].map(s => (
+                            <option key={s} value={s}>{s}</option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Col 4: PIC (2 cols) */}

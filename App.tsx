@@ -297,7 +297,7 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="space-y-1 w-1/2">
+                  <div className="space-y-1 w-1/3">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Category</label>
                     <input
                       type="text"
@@ -308,7 +308,7 @@ const App: React.FC = () => {
                       required
                     />
                   </div>
-                  <div className="space-y-1 w-1/2">
+                  <div className="space-y-1 w-1/3">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Sub-category</label>
                     <input
                       type="text"
@@ -317,6 +317,18 @@ const App: React.FC = () => {
                       placeholder="Optional"
                       className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
                     />
+                  </div>
+                  <div className="space-y-1 w-1/3">
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Status</label>
+                    <select
+                      value={newProject.initialStatus}
+                      onChange={(e) => setNewProject({ ...newProject, initialStatus: e.target.value as Status })}
+                      className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono appearance-none bg-white"
+                    >
+                      {['In Progress', 'Pending Update', 'Completed', 'Review', 'Blocker', 'QA', 'IoT', 'Live'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
