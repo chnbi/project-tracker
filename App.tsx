@@ -272,91 +272,149 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* New Project Modal */}
+        {/* New Project Modal (Floating Popup) */}
         {showAddProject && (
-          <div className="mb-8 p-6 bg-gray-50 border border-gray-100 max-w-md ml-auto">
-            <h2 className="text-sm font-semibold mb-4 uppercase tracking-wider">New Project</h2>
-            <form onSubmit={handleAddProject} className="flex flex-col gap-3">
-              <input
-                type="text"
-                value={newProject.name}
-                onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                placeholder="Project Name"
-                className="p-2 border bg-white text-sm"
-                required
-              />
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newProject.category}
-                  onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
-                  placeholder="Category"
-                  className="p-2 border bg-white text-sm w-1/2"
-                  required
-                />
-                <input
-                  type="text"
-                  value={newProject.subCategory}
-                  onChange={(e) => setNewProject({ ...newProject, subCategory: e.target.value })}
-                  placeholder="Sub-category (Optional)"
-                  className="p-2 border bg-white text-sm w-1/2"
-                />
-              </div>
-              <textarea
-                value={newProject.initialDescription}
-                onChange={(e) => setNewProject({ ...newProject, initialDescription: e.target.value })}
-                placeholder="Initial Update / Description"
-                className="p-2 border bg-white text-sm h-20 resize-none"
-                required
-              />
-              <div className="flex justify-end gap-3 mt-2">
-                <button type="button" onClick={() => setShowAddProject(false)} className="text-xs text-gray-500 hover:text-black uppercase">Cancel</button>
-                <button type="submit" className="text-xs bg-black text-white px-4 py-2 hover:bg-gray-800 uppercase">Create</button>
-              </div>
-            </form>
+          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-white border border-black p-8 w-full max-w-md shadow-2xl relative">
+              <button
+                onClick={() => setShowAddProject(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-black"
+              >
+                <Plus size={20} className="rotate-45" />
+              </button>
+
+              <h2 className="text-sm font-bold mb-6 uppercase tracking-widest text-center">New Project</h2>
+              <form onSubmit={handleAddProject} className="flex flex-col gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Project Name</label>
+                  <input
+                    type="text"
+                    value={newProject.name}
+                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                    placeholder="Enter project name"
+                    className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="space-y-1 w-1/2">
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Category</label>
+                    <input
+                      type="text"
+                      value={newProject.category}
+                      onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                      placeholder="e.g. Design"
+                      className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1 w-1/2">
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Sub-category</label>
+                    <input
+                      type="text"
+                      value={newProject.subCategory}
+                      onChange={(e) => setNewProject({ ...newProject, subCategory: e.target.value })}
+                      placeholder="Optional"
+                      className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Initial Update</label>
+                  <textarea
+                    value={newProject.initialDescription}
+                    onChange={(e) => setNewProject({ ...newProject, initialDescription: e.target.value })}
+                    placeholder="What is the current status?"
+                    className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono h-24 resize-none"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="mt-4 bg-black text-white py-3 text-xs uppercase font-bold tracking-widest hover:bg-gray-800 transition-colors"
+                >
+                  Create Project
+                </button>
+              </form>
+            </div>
           </div>
         )}
-
-        {/* Tree Navigation */}
-        <div className="relative overflow-x-auto no-scrollbar pb-8">
-          <div className="flex flex-nowrap gap-[120px] min-w-max relative">
-            <div className="relative">
-              <FilterColumn title="Type" items={level1Items} selectedId={selectedL1} onSelect={handleL1Select} levelIndex={0} />
-              <ConnectorLine fromIndex={getIndex(level1Items, selectedL1)} toIndex={getIndex(level2Items, selectedL2)} isActive={level2Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
-            </div>
-            {level2Items.length > 0 && (
-              <div className="relative">
-                <FilterColumn
-                  title="Category"
-                  items={level2Items}
-                  selectedId={selectedL2}
-                  onSelect={handleL2Select}
-                  levelIndex={1}
-                  onAdd={level1Items[0]?.id === 'all' || selectedL1 === 'project' ? addCategory : undefined}
-                />
-                <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
-              </div>
-            )}
-            {level3Items.length > 0 && selectedL2 && selectedL2 !== 'all' && (
-              <div className="relative">
-                <FilterColumn
-                  title="Sub-item"
-                  items={level3Items}
-                  selectedId={selectedL3}
-                  onSelect={setSelectedL3}
-                  levelIndex={2}
-                  onAdd={selectedL1 === 'project' ? (name) => addSubCategory(selectedL2, name) : undefined}
-                />
-              </div>
-            )}
-          </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newProject.category}
+            onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+            placeholder="Category"
+            className="p-2 border bg-white text-sm w-1/2"
+            required
+          />
+          <input
+            type="text"
+            value={newProject.subCategory}
+            onChange={(e) => setNewProject({ ...newProject, subCategory: e.target.value })}
+            placeholder="Sub-category (Optional)"
+            className="p-2 border bg-white text-sm w-1/2"
+          />
         </div>
-      </header>
+        <textarea
+          value={newProject.initialDescription}
+          onChange={(e) => setNewProject({ ...newProject, initialDescription: e.target.value })}
+          placeholder="Initial Update / Description"
+          className="p-2 border bg-white text-sm h-20 resize-none"
+          required
+        />
+        <div className="flex justify-end gap-3 mt-2">
+          <button type="button" onClick={() => setShowAddProject(false)} className="text-xs text-gray-500 hover:text-black uppercase">Cancel</button>
+          <button type="submit" className="text-xs bg-black text-white px-4 py-2 hover:bg-gray-800 uppercase">Create</button>
+        </div>
+      </form>
+    </div>
+  )
+}
 
-      {/* Main Content: Grid List */}
-      <main className="max-w-6xl mx-auto">
-        {/* Search Bar - Significantly smaller and tighter */}
-        <div className="relative mb-6 group w-full max-w-xs ml-auto mr-0">
+{/* Tree Navigation */ }
+<div className="relative overflow-x-auto no-scrollbar pb-8">
+  <div className="flex flex-nowrap gap-[120px] min-w-max relative">
+    <div className="relative">
+      <FilterColumn title="Type" items={level1Items} selectedId={selectedL1} onSelect={handleL1Select} levelIndex={0} />
+      <ConnectorLine fromIndex={getIndex(level1Items, selectedL1)} toIndex={getIndex(level2Items, selectedL2)} isActive={level2Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+    </div>
+    {level2Items.length > 0 && (
+      <div className="relative">
+        <FilterColumn
+          title="Category"
+          items={level2Items}
+          selectedId={selectedL2}
+          onSelect={handleL2Select}
+          levelIndex={1}
+          onAdd={level1Items[0]?.id === 'all' || selectedL1 === 'project' ? addCategory : undefined}
+        />
+        <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+      </div>
+    )}
+    {level3Items.length > 0 && selectedL2 && selectedL2 !== 'all' && (
+      <div className="relative">
+        <FilterColumn
+          title="Sub-item"
+          items={level3Items}
+          selectedId={selectedL3}
+          onSelect={setSelectedL3}
+          levelIndex={2}
+          onAdd={selectedL1 === 'project' ? (name) => addSubCategory(selectedL2, name) : undefined}
+        />
+      </div>
+    )}
+  </div>
+</div>
+      </header >
+
+  {/* Main Content: Grid List */ }
+  < main className = "max-w-6xl mx-auto" >
+    {/* Search Bar - Significantly smaller and tighter */ }
+    < div className = "relative mb-6 group w-full max-w-xs ml-auto mr-0" >
           <input
             type="text"
             placeholder="Search projects..."
@@ -365,33 +423,35 @@ const App: React.FC = () => {
             className="w-full bg-transparent border-b border-gray-200 py-1 text-sm font-normal focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
           />
           <Search className="absolute right-0 top-1.5 w-4 h-4 text-gray-300 group-focus-within:text-black transition-colors" />
-        </div>
+        </div >
 
-        {/* List Header */}
-        <div className="grid grid-cols-12 gap-x-4 pb-4 border-b border-black mb-0 text-[10px] uppercase tracking-widest text-black font-bold">
+  {/* List Header */ }
+  < div className = "grid grid-cols-12 gap-x-4 pb-4 border-b border-black mb-0 text-[10px] uppercase tracking-widest text-black font-bold" >
           <div className="col-span-1">Date</div>
           <div className="col-span-5">Project</div>
           <div className="col-span-2">Status</div>
           <div className="col-span-2">PIC</div>
           <div className="col-span-2 text-right">Category</div>
-        </div>
+        </div >
 
-        {/* Projects List */}
-        <div className="w-full">
-          {filteredProjects.length > 0 ? (
-            <div className="flex flex-col">
-              {filteredProjects.map((project) => (
-                <ProjectGridRow key={project.id} project={project} />
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-gray-400 text-sm font-mono text-center">
-              [ Empty ]
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+  {/* Projects List */ }
+  < div className = "w-full" >
+  {
+    filteredProjects.length > 0 ? (
+      <div className="flex flex-col">
+        {filteredProjects.map((project) => (
+          <ProjectGridRow key={project.id} project={project} />
+        ))}
+      </div>
+    ) : (
+      <div className="py-20 text-gray-400 text-sm font-mono text-center">
+        [ Empty ]
+      </div>
+    )
+  }
+        </div >
+      </main >
+    </div >
   );
 };
 

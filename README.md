@@ -1,20 +1,32 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Project Tracker - User Guide
 
-# Run and deploy your AI Studio app
+## 1. Authentication
+- **Login**: Click "Log in" at the top right. Enter your name and email.
+- **Magic Link**: You will receive an email from Supabase. Click the link to sign in.
+- **Why?**: Configuring projects and updates requires authentication to ensure data security.
 
-This contains everything you need to run your app locally.
+## 2. Navigation & Filtering
+The top section is a **Hierarchy Tree**:
+- **Level 1 (Main Type)**: Choose between filtering by `Project Category`, `Status`, or `Person`.
+- **Level 2 (Category)**: Select a specific category (e.g., "Design", "Dev").
+- **Level 3 (Sub-Category)**: Drill down further if sub-categories exist.
+- **Adding Categories**: If you select `Project` -> `Category`, you can type a new category name in the "Add Custom" input to create it.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1dmYF5RGW_R2TXEn2CKMhd9pW3B07k9GN
+## 3. Managing Projects
+### Create New Project
+1.  Click **"New"** (top right).
+2.  **Fill Details**: Name, Category, Sub-category (optional), and the **Initial Update**.
+3.  **Result**: The project appears in the grid immediately.
 
-## Run Locally
+### Viewing Updates
+- Click on any **Project Row** to expand it.
+- You will see the history of updates (Date | Description | Person | Status).
 
-**Prerequisites:**  Node.js
+### Adding Updates
+1.  Expand a project.
+2.  Click **"Add Update"**.
+3.  Enter the new status, description, and "Person in Charge" (PIC).
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Editing / Deleting
+- **Hover** over any specific update row in the history.
+- You will see small **Edit (pencil)** and **Delete (trash)** icons appear.
