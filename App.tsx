@@ -45,7 +45,9 @@ const App: React.FC = () => {
     // 1. Project Type -> Dynamic Categories
     if (selectedL1 === 'project') {
       const allCategories = projects.map(p => p.category).filter(Boolean);
-      const uniqueCategories = [...new Set(allCategories)].sort();
+      // Merge with custom types
+      const mergedCategories = [...allCategories, ...customCategories];
+      const uniqueCategories = [...new Set(mergedCategories)].sort();
 
       // Try to find matching labels in constant FILTERS, else use raw value
       const projectFilterNode = FILTERS.find(f => f.id === 'project');
@@ -85,11 +87,16 @@ const App: React.FC = () => {
     if (!selectedL2 || selectedL2 === 'all') return [];
 
     // 2. Project Type -> Dynamic SubCategories
+    // 2. Project Type -> Dynamic SubCategories
     if (selectedL1 === 'project') {
       // Filter projects by the selected Category first
       const categoryProjects = projects.filter(p => p.category === selectedL2);
       // Extract unique SubCategories
-      const allSubCats = categoryProjects.map(p => p.subCategory).filter(Boolean) as string[];
+      const projectSubCats = categoryProjects.map(p => p.subCategory).filter(Boolean) as string[];
+      // Merge with custom subcategories for this category
+      const customs = customSubCategories[selectedL2] || [];
+
+      const allSubCats = [...projectSubCats, ...customs];
       const uniqueSubCats = [...new Set(allSubCats)].sort();
 
       if (uniqueSubCats.length === 0) return [];
