@@ -19,7 +19,7 @@ const App: React.FC = () => {
   const [selectedL3, setSelectedL3] = useState<string>(''); // Default: All
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddProject, setShowAddProject] = useState(false);
-  const [newProject, setNewProject] = useState({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status });
+  const [newProject, setNewProject] = useState({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '' });
   const [showLogin, setShowLogin] = useState(false);
   const [loginForm, setLoginForm] = useState({ name: '', email: '' });
 
@@ -27,7 +27,7 @@ const App: React.FC = () => {
     e.preventDefault();
     addProject(newProject);
     setShowAddProject(false);
-    setNewProject({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status });
+    setNewProject({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '' });
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -236,6 +236,51 @@ const App: React.FC = () => {
               <div className="flex justify-end gap-3 mt-2">
                 <button type="button" onClick={() => setShowLogin(false)} className="text-xs text-gray-500 hover:text-black uppercase">Cancel</button>
                 <button type="submit" className="text-xs bg-black text-white px-4 py-2 hover:bg-gray-800 uppercase">Enter</button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* New Project Modal */}
+        {showAddProject && (
+          <div className="mb-8 p-6 bg-gray-50 border border-gray-100 max-w-md ml-auto">
+            <h2 className="text-sm font-semibold mb-4 uppercase tracking-wider">New Project</h2>
+            <form onSubmit={handleAddProject} className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={newProject.name}
+                onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                placeholder="Project Name"
+                className="p-2 border bg-white text-sm"
+                required
+              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newProject.category}
+                  onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                  placeholder="Category"
+                  className="p-2 border bg-white text-sm w-1/2"
+                  required
+                />
+                <input
+                  type="text"
+                  value={newProject.subCategory}
+                  onChange={(e) => setNewProject({ ...newProject, subCategory: e.target.value })}
+                  placeholder="Sub-category (Optional)"
+                  className="p-2 border bg-white text-sm w-1/2"
+                />
+              </div>
+              <textarea
+                value={newProject.initialDescription}
+                onChange={(e) => setNewProject({ ...newProject, initialDescription: e.target.value })}
+                placeholder="Initial Update / Description"
+                className="p-2 border bg-white text-sm h-20 resize-none"
+                required
+              />
+              <div className="flex justify-end gap-3 mt-2">
+                <button type="button" onClick={() => setShowAddProject(false)} className="text-xs text-gray-500 hover:text-black uppercase">Cancel</button>
+                <button type="submit" className="text-xs bg-black text-white px-4 py-2 hover:bg-gray-800 uppercase">Create</button>
               </div>
             </form>
           </div>
