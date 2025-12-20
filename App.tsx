@@ -13,14 +13,14 @@ const ROW_HEIGHT = 32;
 const COL_GAP = 120;
 
 const App: React.FC = () => {
-  const { projects, addProject, customCategories, addCategory, customSubCategories, addSubCategory, renameCategory, deleteCategory, updateProviderName } = useProjects();
+  const { projects, addProject, customCategories, addCategory, renameCategory, deleteCategory, updateProviderName } = useProjects();
   const { user, login, logout } = useAuth();
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>(''); // Default: All
   const [selectedL3, setSelectedL3] = useState<string>(''); // Default: All
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddProject, setShowAddProject] = useState(false);
-  const [newProject, setNewProject] = useState({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
+  const [newProject, setNewProject] = useState({ name: '', category: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
   const [showLogin, setShowLogin] = useState(false);
   const [loginForm, setLoginForm] = useState({ name: '', email: '' });
 
@@ -55,7 +55,7 @@ const App: React.FC = () => {
     e.preventDefault();
     addProject(newProject);
     setShowAddProject(false);
-    setNewProject({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
+    setNewProject({ name: '', category: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -111,31 +111,14 @@ const App: React.FC = () => {
 
 
   const level3Items = useMemo(() => {
-    // 1. Generic "All" check - if L2 is all, usually we don't show L3 or show all? 
-    // Minus One logic: If L2 is 'All', L3 might not make sense or should be disabled.
-    // For now, if L2 is 'all' or empty, return empty to hide L3 column, OR return all possible L3s.
-    // Let's hide L3 if L2 is 'all' for simplicity, or return specific subitems if needed.
+    // 1. Generic "All" check
     if (!selectedL2 || selectedL2 === 'all') return [];
 
-    // 2. Project Type -> Dynamic SubCategories
+    // 2. Project Type -> Show PROJECTS in this Category (formerly SubCategories)
     if (selectedL1 === 'project') {
-      // Filter projects by the selected Category first
-      const categoryProjects = projects.filter(p => p.category === selectedL2);
-      // Extract unique SubCategories
-      const projectSubCats = categoryProjects.map(p => p.subCategory).filter(Boolean) as string[];
-      // Merge with custom subcategories for this category
-      const customs = customSubCategories[selectedL2] || [];
-
-      const allSubCats = [...projectSubCats, ...customs];
-      const uniqueSubCats = [...new Set(allSubCats)].sort();
-
-      if (uniqueSubCats.length === 0) return [];
-
-      // Try to find labels from static config if possible (deep search), otherwise raw
-      // Actually accessing the deep static tree is complex, let's just use raw for now or primitive matching
-      // The original FILTERS structure had children of children.
-
-      return [{ id: 'all', label: 'All' }, ...uniqueSubCats.map(sc => ({ id: sc, label: sc }))];
+      return projects
+        .filter(p => p.category === selectedL2)
+        .map(p => ({ id: p.id, label: p.name }));
     }
 
     // 3. Dynamic Hierarchies (Status/Person > Projects)
@@ -161,14 +144,12 @@ const App: React.FC = () => {
 
       // -- L1/L2/L3 Filtering --
       if (selectedL1 === 'project') {
-        // L2 = Category, L3 = SubCategory
+        // L2 = Category, L3 = Project ID
         if (selectedL2 && selectedL2 !== 'all' && selectedL2 !== '') {
           isMatch = isMatch && project.category === selectedL2;
         }
         if (selectedL3 && selectedL3 !== 'all' && selectedL3 !== '') {
-          // If L3 corresponds to SubCategory (dynamically generated)
-          // We check for strict match against project.subCategory
-          isMatch = isMatch && project.subCategory === selectedL3;
+          isMatch = isMatch && project.id === selectedL3;
         }
       }
       else if (selectedL1 === 'status') {
@@ -348,7 +329,7 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="space-y-1 w-1/3">
+                  <div className="space-y-1 w-1/2">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Category</label>
                     <div className="relative">
                       <input
@@ -367,17 +348,7 @@ const App: React.FC = () => {
                       </datalist>
                     </div>
                   </div>
-                  <div className="space-y-1 w-1/3">
-                    <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Sub-category</label>
-                    <input
-                      type="text"
-                      value={newProject.subCategory}
-                      onChange={(e) => setNewProject({ ...newProject, subCategory: e.target.value })}
-                      placeholder="Optional"
-                      className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1 w-1/3">
+                  <div className="space-y-1 w-1/2">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Status</label>
                     <select
                       value={newProject.initialStatus}
@@ -435,12 +406,12 @@ const App: React.FC = () => {
             {level2Items.length > 0 && (
               <div className="relative">
                 <FilterColumn
-                  title="Category"
+                  title={selectedL1 === 'project' ? "Category" : "Item"}
                   items={level2Items}
                   selectedId={selectedL2}
                   onSelect={handleL2Select}
                   levelIndex={1}
-                  onAdd={level1Items[0]?.id === 'all' || selectedL1 === 'project' ? addCategory : undefined}
+                  onAdd={selectedL1 === 'project' ? addCategory : undefined}
                   onRename={selectedL1 === 'project' && user ? renameCategory : undefined}
                   onDelete={selectedL1 === 'project' && user ? deleteCategory : undefined}
                 />
@@ -450,12 +421,11 @@ const App: React.FC = () => {
             {level3Items.length > 0 && selectedL2 && selectedL2 !== 'all' && (
               <div className="relative">
                 <FilterColumn
-                  title="Sub-item"
+                  title="Project"
                   items={level3Items}
                   selectedId={selectedL3}
                   onSelect={setSelectedL3}
                   levelIndex={2}
-                  onAdd={selectedL1 === 'project' ? (name) => addSubCategory(selectedL2, name) : undefined}
                 />
               </div>
             )}

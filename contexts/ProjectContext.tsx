@@ -8,7 +8,6 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
-  const [customSubCategories, setCustomSubCategories] = useState<Record<string, string[]>>({});
   const { user } = useAuth();
 
   // Fetch data on mount or when user changes
@@ -35,7 +34,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         id: p.id,
         name: p.name,
         category: p.category,
-        subCategory: p.sub_category, // Map snake_case to camelCase
         status: p.status as Status,
         updates: (p.updates || [])
           .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort updates desc before mapping
@@ -59,21 +57,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (catError) console.error('Error fetching categories:', catError);
       else setCustomCategories((catData || []).map(c => c.name));
-
-      // 3. Fetch Subcategories
-      const { data: subCatData, error: subCatError } = await supabase
-        .from('subcategories')
-        .select('category_name, name');
-
-      if (subCatError) console.error('Error fetching subcategories:', subCatError);
-      else {
-        const subMap: Record<string, string[]> = {};
-        subCatData?.forEach(sc => {
-          if (!subMap[sc.category_name]) subMap[sc.category_name] = [];
-          subMap[sc.category_name].push(sc.name);
-        });
-        setCustomSubCategories(subMap);
-      }
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -108,7 +91,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         user_id: user.id,
         name: data.name,
         category: data.category,
-        sub_category: data.subCategory,
         status: data.initialStatus
       });
 
@@ -147,7 +129,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const updates: any = {};
       if (data.name) updates.name = data.name;
       if (data.category) updates.category = data.category;
-      if (data.subCategory) updates.sub_category = data.subCategory;
       if (data.status) updates.status = data.status;
 
       const { error } = await supabase.from('projects').update(updates).eq('id', id);
@@ -285,27 +266,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const addSubCategory = async (category: string, subCategory: string) => {
-    if (!user) return;
-
-    // Optimistic check
-    const existing = customSubCategories[category] || [];
-    if (!existing.includes(subCategory)) {
-      // Optimistic UI update could be complex with state, let's just push and fetch for safety for now or straightforward state
-      try {
-        const { error } = await supabase.from('subcategories').insert({
-          category_name: category,
-          name: subCategory,
-          created_by: user.id
-        });
-        if (error) throw error;
-        fetchData();
-      } catch (e) {
-        console.error("Error adding subcategory", e);
-      }
-    }
-  };
-
 
   const updateProviderName = async (oldName: string, newName: string) => {
     if (!user) return;
@@ -338,8 +298,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addCategory,
       renameCategory,
       deleteCategory,
-      customSubCategories,
-      addSubCategory,
       updateProviderName
     }}>
       {children}

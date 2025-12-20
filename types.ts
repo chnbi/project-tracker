@@ -1,4 +1,4 @@
-export type Status = 'Pending Update' | 'In Progress' | 'Completed' | 'Review' | 'Blocker' | 'QA' | 'IoT' | 'Live';
+export type Status = 'Backlog' | 'Pending Update' | 'In Progress' | 'Blocker' | 'QA' | 'Pushed to IoT' | 'Live' | 'Done';
 
 export interface Update {
   id: string;
@@ -13,7 +13,6 @@ export interface Project {
   id: string;
   name: string;
   category: string;
-  subCategory?: string;
   status: Status;
   updates: Update[];
 }
@@ -54,7 +53,5 @@ export interface ProjectContextType {
   addCategory: (category: string) => void;
   renameCategory: (oldName: string, newName: string) => void;
   deleteCategory: (name: string) => void;
-  customSubCategories: Record<string, string[]>;
-  addSubCategory: (category: string, subCategory: string) => void;
   updateProviderName: (oldName: string, newName: string) => Promise<void>;
 }
