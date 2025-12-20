@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, LogIn } from 'lucide-react';
+import { Search, Plus, LogIn, Edit2, X, Check } from 'lucide-react';
+import { supabase } from './utils/supabaseClient';
 import { FILTERS } from './constants';
 import { useProjects } from './contexts/ProjectContext';
 import { useAuth } from './contexts/AuthContext';
@@ -12,7 +13,7 @@ const ROW_HEIGHT = 32;
 const COL_GAP = 120;
 
 const App: React.FC = () => {
-  const { projects, addProject, customCategories, addCategory, customSubCategories, addSubCategory, renameCategory, deleteCategory } = useProjects();
+  const { projects, addProject, customCategories, addCategory, customSubCategories, addSubCategory, renameCategory, deleteCategory, updateProviderName } = useProjects();
   const { user, login, logout } = useAuth();
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>(''); // Default: All
@@ -22,6 +23,33 @@ const App: React.FC = () => {
   const [newProject, setNewProject] = useState({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
   const [showLogin, setShowLogin] = useState(false);
   const [loginForm, setLoginForm] = useState({ name: '', email: '' });
+
+  // Edit Name State
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState('');
+
+  const handleStartEditName = () => {
+    setEditNameValue(user?.name || '');
+    setIsEditingName(true);
+  };
+
+  const handleSaveName = async () => {
+    if (editNameValue.trim() && user && editNameValue !== user.name) {
+      const oldName = user.name;
+      // 1. Update Profile
+      const { error } = await supabase.auth.updateUser({ data: { name: editNameValue } });
+
+      if (!error) {
+        // 2. Batch Update all past activity
+        await updateProviderName(oldName, editNameValue);
+        window.location.reload();
+      } else {
+        console.error(error);
+        alert('Failed to update name');
+      }
+    }
+    setIsEditingName(false);
+  };
 
   const handleAddProject = (e: React.FormEvent) => {
     e.preventDefault();
@@ -214,16 +242,34 @@ const App: React.FC = () => {
           <div className="flex items-center gap-6 text-sm">
             {user ? (
               <>
-                <span className="text-gray-500">{user.name}</span>
-                <button onClick={logout} className="hover:text-black transition-colors">Log out</button>
+                {isEditingName ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      value={editNameValue}
+                      onChange={(e) => setEditNameValue(e.target.value)}
+                      className="bg-transparent border-b border-black outline-none text-right w-24 text-gray-700"
+                      autoFocus
+                    />
+                    <button onClick={handleSaveName} className="text-green-600 hover:bg-green-50 rounded p-0.5"><Check size={14} /></button>
+                    <button onClick={() => setIsEditingName(false)} className="text-red-600 hover:bg-red-50 rounded p-0.5"><X size={14} /></button>
+                  </div>
+                ) : (
+                  <div className="group flex items-center gap-2">
+                    <span className="text-gray-500 font-medium">{user.name}</span>
+                    <button onClick={handleStartEditName} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-black">
+                      <Edit2 size={12} />
+                    </button>
+                  </div>
+                )}
+                <button onClick={logout} className="hover:text-black transition-colors text-xs text-red-500/80">Log out</button>
               </>
             ) : (
               <button onClick={() => setShowLogin(!showLogin)} className="flex items-center gap-2 hover:text-black text-gray-500 transition-colors">
                 <LogIn size={14} /> Log in
               </button>
             )}
-            <button onClick={() => setShowAddProject(!showAddProject)} className="flex items-center gap-2 hover:text-black text-gray-500 transition-colors">
-              <Plus size={14} /> {user ? 'New' : ''}
+            <button onClick={() => setShowAddProject(!showAddProject)} className="flex items-center gap-2 hover:text-black text-gray-400 font-medium transition-colors">
+              <Plus size={14} /> New Project
             </button>
             {/* If !user, show nothing or maybe just disabled? Requirement says HIDE. */}
             {!user && <span className="text-gray-300 text-xs italic">Read Only</span>}

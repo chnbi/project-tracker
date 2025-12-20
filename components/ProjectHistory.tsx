@@ -1,129 +1,262 @@
-import React, { useState } from 'react';
-import { Project, Update } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Project, Update, Status } from '../types';
 import { useProjects } from '../contexts/ProjectContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Plus, Trash2, Edit2, X, Check } from 'lucide-react';
+import { STATUSES } from '../constants';
 
 interface ProjectHistoryProps {
   project: Project;
 }
 
 export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
-  const { addUpdate, deleteUpdate, editUpdate } = useProjects();
+  const { addUpdate, deleteUpdate, editUpdate, updateProject, projects, customCategories } = useProjects();
+  const { user } = useAuth();
+
   const [isAdding, setIsAdding] = useState(false);
-  const [newUpdateDesc, setNewUpdateDesc] = useState('');
+
+  // Add State
+  const [newDesc, setNewDesc] = useState('');
+  const [newPic, setNewPic] = useState('');
+  const [newStatus, setNewStatus] = useState<Status>('In Progress');
+  const [newCategory, setNewCategory] = useState('');
+
+  // Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState('');
+  const [editStatus, setEditStatus] = useState<Status>('In Progress');
+  const [editPic, setEditPic] = useState('');
+
+  // Derive unique PICs for dropdown
+  const allPics = useMemo(() => {
+    const pics = new Set<string>();
+    projects.forEach(p => {
+      p.updates.forEach(u => pics.add(u.person));
+    });
+    return Array.from(pics).sort();
+  }, [projects]);
+
+  const handleStartAdd = () => {
+    setIsAdding(true);
+    setNewDesc('');
+    setNewPic(project.updates[0]?.person || 'Admin');
+    setNewStatus(project.status);
+    setNewCategory(project.category);
+  };
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUpdateDesc.trim()) return;
+    if (!newDesc.trim()) return;
 
     addUpdate(project.id, {
-      description: newUpdateDesc,
-      person: 'Admin', // Default to 'Admin' for now, can be improved with Auth later
-      status: project.status
+      description: newDesc,
+      person: newPic || 'Admin',
+      status: newStatus
     });
-    setNewUpdateDesc('');
+
+    updateProject(project.id, {
+      status: newStatus,
+      category: newCategory,
+    });
+
     setIsAdding(false);
   };
 
   const startEdit = (update: Update) => {
     setEditingId(update.id);
     setEditDesc(update.description);
+    setEditStatus(update.status);
+    setEditPic(update.person);
   };
 
   const saveEdit = (updateId: string) => {
     if (editingId) {
-      editUpdate(project.id, updateId, { description: editDesc });
+      editUpdate(project.id, updateId, {
+        description: editDesc,
+        status: editStatus,
+        person: editPic
+      });
       setEditingId(null);
     }
   };
 
   return (
-    <div className="w-full py-4 border-t border-black/5">
+    <div className="w-full py-2 border-t border-black/5 bg-gray-50/50">
 
-      {!isAdding && (
-        <div className="grid grid-cols-12 gap-x-4 mb-4">
+      {/* --- ADD FORM --- */}
+      {isAdding ? (
+        <div className="relative group">
+          <form onSubmit={handleAddSubmit} className="grid grid-cols-12 gap-x-4 px-0 py-2 items-start border-b border-black/5 mb-2">
+            <div className="col-span-1 text-[10px] font-mono text-gray-300 mt-1.5">New</div>
+
+            {/* Col 2: Description (5 cols - Match Project Header) */}
+            <div className="col-span-5">
+              <textarea
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="Update description..."
+                className="w-full text-xs font-medium bg-transparent border-b border-black outline-none min-h-[22px] placeholder:text-gray-300 resize-none py-1 leading-normal"
+                autoFocus
+              />
+            </div>
+
+            {/* Col 3: Status (2 cols) */}
+            <div className="col-span-2 mt-1">
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value as Status)}
+                className="w-full bg-transparent text-[10px] uppercase font-bold border-none outline-none py-0 cursor-pointer appearance-none p-0 m-0"
+              >
+                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            {/* Col 4: PIC (1 col) */}
+            <div className="col-span-1 mt-1">
+              <input
+                list="pic-options-add"
+                value={newPic}
+                onChange={(e) => setNewPic(e.target.value)}
+                className="w-full bg-transparent text-[10px] font-mono border-none outline-none py-0 text-gray-600 truncate placeholder:text-gray-400 p-0 m-0"
+                placeholder="PIC"
+              />
+              <datalist id="pic-options-add">
+                {allPics.map(p => <option key={p} value={p} />)}
+              </datalist>
+            </div>
+
+            {/* Col 5: Provider (1 col) */}
+            <div className="col-span-1 text-[10px] font-mono text-gray-400 py-0 truncate mt-1.5">
+              {user?.name || '—'}
+            </div>
+
+            {/* Col 6: Category (2 cols) */}
+            <div className="col-span-2 flex items-center gap-1 justify-end mt-1">
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="w-full bg-transparent text-[10px] font-mono text-gray-500 text-right border-none outline-none py-0 cursor-pointer truncate appearance-none p-0 m-0"
+              >
+                {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            {/* Actions Outside Row */}
+            <div className="absolute right-[-60px] top-2 flex flex-row gap-2">
+              <button type="submit" className="text-black hover:bg-green-100 rounded-full p-1"><Check size={14} /></button>
+              <button type="button" onClick={() => setIsAdding(false)} className="text-gray-400 hover:bg-red-50 rounded-full p-1"><X size={14} /></button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="grid grid-cols-12 gap-x-4 mb-2">
           <div className="col-span-1"></div>
           <div className="col-span-5">
             <button
-              onClick={() => setIsAdding(true)}
-              className="text-[10px] font-mono text-gray-400 hover:text-black hover:underline uppercase tracking-wider"
+              onClick={handleStartAdd}
+              className="text-[10px] font-mono text-gray-300 hover:text-black hover:underline uppercase tracking-wider flex items-center gap-1"
             >
-              + Add Update
+              <Plus size={10} /> Add Update
             </button>
           </div>
         </div>
       )}
 
-      {isAdding && (
-        <form onSubmit={handleAddSubmit} className="grid grid-cols-12 gap-x-4 mb-6">
-          <div className="col-span-1"></div>
-          <div className="col-span-5">
-            <textarea
-              value={newUpdateDesc}
-              onChange={(e) => setNewUpdateDesc(e.target.value)}
-              placeholder="Type update..."
-              className="w-full text-xs font-mono bg-transparent border-b border-black outline-none min-h-[40px] placeholder:text-gray-300 resize-none"
-              autoFocus
-            />
-            <div className="flex gap-3 mt-2">
-              <button type="submit" className="text-[10px] uppercase font-bold text-black hover:underline">Post</button>
-              <button type="button" onClick={() => setIsAdding(false)} className="text-[10px] uppercase text-gray-400 hover:text-black">Cancel</button>
-            </div>
-          </div>
-        </form>
-      )}
+      {/* --- HISTORY LIST --- */}
+      <div className="space-y-1">
+        {project.updates.map((update) => {
+          const isEditing = editingId === update.id;
 
-      <div className="space-y-3">
-        {project.updates.map((update) => (
-          <div key={update.id} className="group/item grid grid-cols-12 gap-x-4 text-xs items-baseline">
-            {/* Col 1: Date */}
-            <div className="col-span-1 font-mono text-gray-400 text-[10px]">
-              {update.date.slice(0, 5)} {/* Short date dd.mm */}
-            </div>
+          return (
+            <div key={update.id} className={`group/item relative grid grid-cols-12 gap-x-4 text-xs items-start hover:bg-white/50 py-1 -mx-2 px-2 rounded ${isEditing ? 'bg-white/80' : ''}`}>
 
-            {/* Col 2: Content (matches Project col) */}
-            <div className="col-span-5">
-              {editingId === update.id ? (
-                <div className="flex gap-2 items-baseline">
-                  <input
+              {/* Col 1: Date */}
+              <div className="col-span-1 font-mono text-gray-400 text-[10px] mt-1.5">
+                {update.date.slice(0, 5)}
+              </div>
+
+              {/* Col 2: Content (5 cols - Corrected from 4) */}
+              <div className="col-span-5">
+                {isEditing ? (
+                  <textarea
                     value={editDesc}
                     onChange={(e) => setEditDesc(e.target.value)}
-                    className="w-full border-b border-black outline-none bg-transparent font-normal"
+                    className="w-full bg-transparent border-b border-black outline-none min-h-[22px] text-xs resize-none py-1 leading-normal"
                     autoFocus
                   />
-                  <button onClick={() => saveEdit(update.id)}><Check size={10} className="text-black" /></button>
-                  <button onClick={() => setEditingId(null)}><X size={10} className="text-gray-400" /></button>
-                </div>
-              ) : (
-                <p className="text-gray-600 font-normal leading-normal">
-                  {update.description}
-                </p>
-              )}
-            </div>
+                ) : (
+                  <p className="text-gray-600 font-normal leading-normal py-1 border-b border-transparent">
+                    {update.description}
+                  </p>
+                )}
+              </div>
 
-            {/* Col 3: Person (aligned with Status/PIC area somewhat?) */}
-            {/* Actually let's put person in the Status/PIC columns area (col 3+4 = 4 cols) */}
-            <div className="col-span-2 text-right">
-              {/* Empty to align person with PIC column (which is col 4) if we skip col 3 */}
-            </div>
+              {/* Col 3: Status (2 cols) */}
+              <div className="col-span-2 mt-1">
+                {isEditing ? (
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as Status)}
+                    className="w-full bg-transparent text-[10px] uppercase font-bold border-none outline-none py-0 cursor-pointer appearance-none p-0 m-0"
+                  >
+                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                ) : (
+                  <span className="text-[10px] uppercase font-bold text-gray-400 px-0 py-0 border-none">
+                    {update.status}
+                  </span>
+                )}
+              </div>
 
-            <div className="col-span-2 font-mono text-[10px] text-gray-300 group-hover/item:text-gray-500">
-              {update.person}
-            </div>
+              {/* Col 4: PIC (1 col) */}
+              <div className="col-span-1 mt-1">
+                {isEditing ? (
+                  <input
+                    list="pic-options-edit"
+                    value={editPic}
+                    onChange={(e) => setEditPic(e.target.value)}
+                    className="w-full bg-transparent text-[10px] font-mono border-none outline-none py-0 text-gray-600 p-0 m-0"
+                  />
+                ) : (
+                  <div className="font-mono text-[10px] text-gray-400 truncate py-0" title={update.person}>
+                    {update.person}
+                  </div>
+                )}
+                <datalist id="pic-options-edit">
+                  {allPics.map(p => <option key={p} value={p} />)}
+                </datalist>
+              </div>
 
-            {/* Col 5: Actions */}
-            <div className="col-span-2 flex justify-end gap-2 opacity-0 group-hover/item:opacity-100 transition-opacity">
-              <button onClick={() => startEdit(update)} className="text-gray-300 hover:text-black">
-                <Edit2 size={10} />
-              </button>
-              <button onClick={() => deleteUpdate(project.id, update.id)} className="text-gray-300 hover:text-red-600">
-                <Trash2 size={10} />
-              </button>
+              {/* Col 5: Provider (1 col) */}
+              <div className="col-span-1 mt-1.5 font-mono text-[10px] text-gray-300 opacity-50 truncate py-0" title={update.provider}>
+                {update.provider || ''}
+              </div>
+
+              {/* Col 6: Category (2 cols) */}
+              <div className="col-span-2 text-right">
+              </div>
+
+              {/* ACTIONS OUTSIDE ROW */}
+              <div className="absolute right-[-60px] top-1 flex flex-row gap-2">
+                {isEditing ? (
+                  <>
+                    <button onClick={() => saveEdit(update.id)} className="text-black hover:bg-green-100 rounded-full p-1"><Check size={14} /></button>
+                    <button onClick={() => setEditingId(null)} className="text-gray-400 hover:bg-red-50 rounded-full p-1"><X size={14} /></button>
+                  </>
+                ) : (
+                  <div className="flex flex-row gap-2 opacity-0 group-hover/item:opacity-100">
+                    <button onClick={() => startEdit(update)} className="text-gray-300 hover:text-black p-1">
+                      <Edit2 size={10} />
+                    </button>
+                    <button onClick={() => deleteUpdate(project.id, update.id)} className="text-gray-300 hover:text-red-600 p-1">
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

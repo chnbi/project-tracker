@@ -37,14 +37,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         category: p.category,
         subCategory: p.sub_category, // Map snake_case to camelCase
         status: p.status as Status,
-        updates: (p.updates || []).map((u: any) => ({
-          id: u.id,
-          date: u.date,
-          description: u.description,
-          person: u.person,
-          provider: u.provider, // Fetch provider
-          status: u.status as Status
-        })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort updates desc
+        updates: (p.updates || [])
+          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort updates desc before mapping
+          .map((u: any) => ({
+            id: u.id,
+            date: u.date,
+            description: u.description,
+            person: u.person,
+            provider: u.provider,
+            status: u.status as Status,
+            // provider might be missing in older rows, ensure handled
+          }))
       }));
 
       setProjects(formattedProjects);
@@ -303,6 +306,25 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+
+  const updateProviderName = async (oldName: string, newName: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('updates')
+        .update({ provider: newName })
+        .eq('provider', oldName);
+
+      if (error) {
+        console.error('Error updating provider names:', error);
+      } else {
+        await fetchData(); // Refresh all data to reflect changes
+      }
+    } catch (err) {
+      console.error('Error in updateProviderName:', err);
+    }
+  };
+
   return (
     <ProjectContext.Provider value={{
       projects,
@@ -317,7 +339,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       renameCategory,
       deleteCategory,
       customSubCategories,
-      addSubCategory
+      addSubCategory,
+      updateProviderName
     }}>
       {children}
     </ProjectContext.Provider>

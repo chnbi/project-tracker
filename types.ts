@@ -56,4 +56,5 @@ export interface ProjectContextType {
   deleteCategory: (name: string) => void;
   customSubCategories: Record<string, string[]>;
   addSubCategory: (category: string, subCategory: string) => void;
+  updateProviderName: (oldName: string, newName: string) => Promise<void>;
 }
