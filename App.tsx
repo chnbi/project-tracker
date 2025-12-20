@@ -226,18 +226,49 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Login Modal (Simplified Inline) */}
+        {/* Login Modal (Floating Popup) */}
         {showLogin && !user && (
-          <div className="mb-8 p-6 bg-gray-50 border border-gray-100 max-w-sm ml-auto">
-            <h2 className="text-sm font-semibold mb-4 uppercase tracking-wider">Authentication</h2>
-            <form onSubmit={handleLogin} className="flex flex-col gap-3">
-              <input type="text" value={loginForm.name} onChange={(e) => setLoginForm({ ...loginForm, name: e.target.value })} placeholder="Name" className="p-2 border bg-white text-sm" required />
-              <input type="email" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} placeholder="Email" className="p-2 border bg-white text-sm" required />
-              <div className="flex justify-end gap-3 mt-2">
-                <button type="button" onClick={() => setShowLogin(false)} className="text-xs text-gray-500 hover:text-black uppercase">Cancel</button>
-                <button type="submit" className="text-xs bg-black text-white px-4 py-2 hover:bg-gray-800 uppercase">Enter</button>
-              </div>
-            </form>
+          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-white border border-black p-8 w-full max-w-sm shadow-2xl relative">
+              <button
+                onClick={() => setShowLogin(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-black"
+              >
+                <Plus size={20} className="rotate-45" />
+              </button>
+
+              <h2 className="text-sm font-bold mb-6 uppercase tracking-widest text-center">Authentication</h2>
+              <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Name</label>
+                  <input
+                    type="text"
+                    value={loginForm.name}
+                    onChange={(e) => setLoginForm({ ...loginForm, name: e.target.value })}
+                    className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                    placeholder="Enter your name"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Email</label>
+                  <input
+                    type="email"
+                    value={loginForm.email}
+                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                    className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="mt-4 bg-black text-white py-3 text-xs uppercase font-bold tracking-widest hover:bg-gray-800 transition-colors"
+                >
+                  Get Magic Link
+                </button>
+              </form>
+            </div>
           </div>
         )}
 
