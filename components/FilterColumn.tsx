@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FilterNode } from '../types';
+import { Plus } from 'lucide-react';
 
 interface FilterColumnProps {
   title: string;
@@ -7,6 +8,7 @@ interface FilterColumnProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   levelIndex: number;
+  onAdd?: (name: string) => void;
 }
 
 export const FilterColumn: React.FC<FilterColumnProps> = ({
@@ -14,15 +16,50 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
   items,
   selectedId,
   onSelect,
+  onAdd
 }) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newName, setNewName] = useState('');
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newName.trim() && onAdd) {
+      onAdd(newName.trim());
+      setNewName('');
+      setIsAdding(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-w-[200px] relative">
-      {/* Fixed height header for alignment calculation */}
-      <div className="h-12 flex items-center mb-2">
-        <h3 className="text-sm font-medium text-primary uppercase tracking-wide opacity-80">{title}</h3>
+      {/* Fixed height header */}
+      <div className="h-12 flex items-center justify-between mb-2 border-b border-black/10 pr-2 group/header">
+        <h3 className="text-xs font-bold text-black uppercase tracking-widest">{title}</h3>
+        {onAdd && (
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className={`text-black/20 hover:text-black transition-colors ${isAdding ? 'text-black' : ''}`}
+            title="Add New"
+          >
+            <Plus size={14} />
+          </button>
+        )}
       </div>
-      
-      <div className="flex flex-col space-y-0">
+
+      <div className="flex flex-col space-y-0.5">
+        {onAdd && isAdding && (
+          <form onSubmit={handleAdd} className="mb-2 px-0">
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="w-full text-sm py-1 border-b border-black outline-none bg-transparent placeholder:text-black/20"
+              placeholder={`New ${title}...`}
+              autoFocus
+              onBlur={() => !newName && setIsAdding(false)}
+            />
+          </form>
+        )}
+
         {items.map((item, index) => {
           const isSelected = selectedId === item.id;
           return (
@@ -30,14 +67,14 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
               key={item.id}
               onClick={() => onSelect(item.id)}
               className={`
-                flex items-center text-left text-sm px-2 rounded-sm transition-all duration-300 h-8
-                ${isSelected ? 'bg-gray-200 font-medium text-primary translate-x-1' : 'text-secondary hover:text-primary hover:bg-gray-50'}
+                flex items-center text-left text-sm px-0 transition-all duration-200 h-8 hover:opacity-100 group
+                ${isSelected ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}
               `}
             >
-              <span className="text-[10px] w-6 opacity-40 font-mono">
+              <span className={`text-[10px] w-6 font-mono transition-opacity ${isSelected ? 'text-black' : 'text-gray-400 group-hover:text-black'}`}>
                 {(index + 1).toString().padStart(2, '0')}
               </span>
-              <span>{item.label}</span>
+              <span className={`${isSelected ? 'text-black' : 'text-black/80'}`}>{item.label}</span>
             </button>
           );
         })}

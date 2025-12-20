@@ -10,17 +10,24 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [customSubCategories, setCustomSubCategories] = useState<Record<string, string[]>>({});
   const { user } = useAuth();
 
   // Initialize data
   useEffect(() => {
     const storedProjects = storage.get<Project[]>(DATA_KEY, []);
+    const storedCategories = storage.get<string[]>('minusone_categories', []);
+    const storedSubCategories = storage.get<Record<string, string[]>>('minusone_subcategories', {});
+
     if (storedProjects.length === 0) {
       setProjects(SEED_DATA);
       storage.set(DATA_KEY, SEED_DATA);
     } else {
       setProjects(storedProjects);
     }
+    setCustomCategories(storedCategories);
+    setCustomSubCategories(storedSubCategories);
   }, []);
 
   // Persist on change
@@ -30,9 +37,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [projects]);
 
+  useEffect(() => {
+    storage.set('minusone_categories', customCategories);
+  }, [customCategories]);
+
+  useEffect(() => {
+    storage.set('minusone_subcategories', customSubCategories);
+  }, [customSubCategories]);
+
   const addProject = (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string }) => {
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
-    
+
     const newUpdate: Update = {
       id: crypto.randomUUID(),
       date: today,
@@ -63,7 +78,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addUpdate = (projectId: string, updateData: Omit<Update, 'id' | 'date'>) => {
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
-    
+
     const newUpdate: Update = {
       id: crypto.randomUUID(),
       date: today,
@@ -81,12 +96,67 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  const editUpdate = (projectId: string, updateId: string, data: Partial<Update>) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id === projectId) {
+        return {
+          ...p,
+          updates: p.updates.map(u => u.id === updateId ? { ...u, ...data } : u)
+        };
+      }
+      return p;
+    }));
+  };
+
+  const deleteUpdate = (projectId: string, updateId: string) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id === projectId) {
+        return {
+          ...p,
+          updates: p.updates.filter(u => u.id !== updateId)
+        };
+      }
+      return p;
+    }));
+  };
+
+
+
+  const addCategory = (category: string) => {
+    if (!customCategories.includes(category)) {
+      setCustomCategories(prev => [...prev, category]);
+    }
+  };
+
+  const addSubCategory = (category: string, subCategory: string) => {
+    setCustomSubCategories(prev => {
+      const existing = prev[category] || [];
+      if (!existing.includes(subCategory)) {
+        return { ...prev, [category]: [...existing, subCategory] };
+      }
+      return prev;
+    });
+  };
+
   return (
-    <ProjectContext.Provider value={{ projects, addProject, updateProject, deleteProject, addUpdate }}>
+    <ProjectContext.Provider value={{
+      projects,
+      addProject,
+      updateProject,
+      deleteProject,
+      addUpdate,
+      editUpdate,
+      deleteUpdate,
+      customCategories,
+      addCategory,
+      customSubCategories,
+      addSubCategory
+    }}>
       {children}
     </ProjectContext.Provider>
   );
 };
+
 
 export const useProjects = () => {
   const context = useContext(ProjectContext);

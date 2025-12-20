@@ -11,7 +11,7 @@ export interface Update {
 export interface Project {
   id: string;
   name: string;
-  category: string; 
+  category: string;
   subCategory?: string;
   status: Status;
   updates: Update[];
@@ -47,4 +47,10 @@ export interface ProjectContextType {
   updateProject: (id: string, data: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   addUpdate: (projectId: string, updateData: Omit<Update, 'id' | 'date'>) => void;
+  editUpdate: (projectId: string, updateId: string, data: Partial<Update>) => void;
+  deleteUpdate: (projectId: string, updateId: string) => void;
+  customCategories: string[];
+  addCategory: (category: string) => void;
+  customSubCategories: Record<string, string[]>;
+  addSubCategory: (category: string, subCategory: string) => void;
 }
