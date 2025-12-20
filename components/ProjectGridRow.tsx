@@ -3,7 +3,9 @@ import { Project } from '../types';
 import { useProjects } from '../contexts/ProjectContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectHistory } from './ProjectHistory';
-project: Project;
+
+interface ProjectGridRowProps {
+    project: Project;
 }
 
 export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
@@ -45,11 +47,7 @@ export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
                     <select
                         value={project.status}
                         onClick={(e) => e.stopPropagation()} // Prevent row expansion
-                        onChange={(e) => {
-                            // We need access to updateProject from context, but this component receives project as prop.
-                            // We should probably consume context here or pass handler.
-                            // Let's consume context.
-                        }}
+                        onChange={(e) => handleStatusChange(e.target.value)}
                         className="appearance-none bg-transparent text-[10px] uppercase tracking-wider font-bold text-black border border-black px-1.5 py-px cursor-pointer hover:bg-black hover:text-white transition-colors outline-none"
                     >
                         {['Pending Update', 'In Progress', 'Completed', 'Review', 'Blocker', 'QA', 'IoT', 'Live'].map(s => (
