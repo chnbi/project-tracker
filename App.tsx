@@ -13,7 +13,7 @@ const ROW_HEIGHT = 32;
 const COL_GAP = 120;
 
 const App: React.FC = () => {
-  const { projects, addProject, customCategories, addCategory, renameCategory, deleteCategory, updateProviderName } = useProjects();
+  const { projects, addProject, customCategories, addCategory, renameCategory, deleteCategory, renameStatus, deleteStatus, renamePerson, deletePerson, updateProviderName } = useProjects();
   const { user, login, logout } = useAuth();
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>(''); // Default: All
@@ -412,8 +412,16 @@ const App: React.FC = () => {
                   onSelect={handleL2Select}
                   levelIndex={1}
                   onAdd={selectedL1 === 'project' ? addCategory : undefined}
-                  onRename={selectedL1 === 'project' && user ? renameCategory : undefined}
-                  onDelete={selectedL1 === 'project' && user ? deleteCategory : undefined}
+                  onRename={
+                    (selectedL1 === 'project' && user) ? renameCategory :
+                      (selectedL1 === 'status' && user) ? renameStatus :
+                        (selectedL1 === 'person_filter' && user) ? renamePerson : undefined
+                  }
+                  onDelete={
+                    (selectedL1 === 'project' && user) ? deleteCategory :
+                      (selectedL1 === 'status' && user) ? deleteStatus :
+                        (selectedL1 === 'person_filter' && user) ? deletePerson : undefined
+                  }
                 />
                 <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
               </div>

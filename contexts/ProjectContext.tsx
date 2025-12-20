@@ -266,6 +266,45 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const renameStatus = async (oldName: string, newName: string) => {
+    if (!user || !newName.trim()) return;
+    try {
+      // Update all projects
+      await supabase.from('projects').update({ status: newName }).eq('status', oldName);
+      // Update all updates
+      await supabase.from('updates').update({ status: newName }).eq('status', oldName);
+      fetchData();
+    } catch (e) {
+      console.error("Error renaming status", e);
+    }
+  };
+
+  const deleteStatus = async (name: string) => {
+    if (!user) return;
+    if (!confirm(`Delete status "${name}"? Projects with this status will be unaffected but the filter will disappear if no projects use it.`)) return;
+    // Since statuses are dynamic/derived, we can't 'delete' them from a list unless we change the projects using them.
+    // For now, maybe just warn? Or do we set them to 'Unknown'?
+    // Let's offer to Bulk Change? Or just do nothing and explain.
+    alert("To delete a status, please change the status of all projects using it to something else.");
+  };
+
+  const renamePerson = async (oldName: string, newName: string) => {
+    if (!user || !newName.trim()) return;
+    try {
+      // Update updates person
+      await supabase.from('updates').update({ person: newName }).eq('person', oldName);
+      fetchData();
+    } catch (e) {
+      console.error("Error renaming person", e);
+    }
+  };
+
+  const deletePerson = async (name: string) => {
+    // Deleting a person usually means removing their history? Or just renaming to Unknown?
+    // Let's advise renaming.
+    alert("Cannot delete a person record directly. Try renaming them or re-assigning their updates.");
+  };
+
 
   const updateProviderName = async (oldName: string, newName: string) => {
     if (!user) return;
@@ -298,6 +337,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addCategory,
       renameCategory,
       deleteCategory,
+      renameStatus,
+      deleteStatus,
+      renamePerson,
+      deletePerson,
       updateProviderName
     }}>
       {children}

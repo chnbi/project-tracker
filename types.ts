@@ -1,4 +1,4 @@
-export type Status = 'Backlog' | 'Pending Update' | 'In Progress' | 'Blocker' | 'QA' | 'Pushed to IoT' | 'Live' | 'Done';
+export type Status = string;
 
 export interface Update {
   id: string;
@@ -53,5 +53,9 @@ export interface ProjectContextType {
   addCategory: (category: string) => void;
   renameCategory: (oldName: string, newName: string) => void;
   deleteCategory: (name: string) => void;
+  renameStatus: (oldName: string, newName: string) => void;
+  deleteStatus: (name: string) => void;
+  renamePerson: (oldName: string, newName: string) => void;
+  deletePerson: (name: string) => void;
   updateProviderName: (oldName: string, newName: string) => Promise<void>;
 }
