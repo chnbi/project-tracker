@@ -15,7 +15,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({
           id: session.user.id,
           email: session.user.email || '',
-          name: session.user.email?.split('@')[0] || 'User'
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User'
         });
       }
       setLoading(false);
@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({
           id: session.user.id,
           email: session.user.email || '',
-          name: session.user.email?.split('@')[0] || 'User'
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User'
         });
       } else {
         setUser(null);
@@ -40,7 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (name: string, email: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email });
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          data: {
+            name: name
+          }
+        }
+      });
       if (error) throw error;
       alert('Check your email for the login link!');
     } catch (error) {

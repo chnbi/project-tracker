@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ChevronDown, ChevronUp, Trash, Plus } from 'lucide-react';
 import { Project, Update, Status } from '../types';
 import React, { useState, useEffect } from 'react';
+import { STATUSES } from '../constants';
 
 interface ProjectGroupProps {
   project: Project;
@@ -43,7 +44,7 @@ const UpdateRow: React.FC<{ update: Update; isEditing: boolean; editForm: any; s
               onChange={e => setEditForm({ ...editForm, status: e.target.value })}
               className="text-xs p-1 border rounded"
             >
-              {['Pending Update', 'In Progress', 'Completed', 'Review', 'Blocker', 'QA', 'IoT', 'Live'].map(s => (
+              {STATUSES.map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
@@ -68,7 +69,7 @@ const UpdateRow: React.FC<{ update: Update; isEditing: boolean; editForm: any; s
       </div>
       <div className="col-span-6 md:col-span-2 text-xs text-secondary pt-0.5 flex flex-col">
         <span>{update.person}</span>
-        {isProviderDifferent && (
+        {update.provider && (
           <span className="text-[9px] text-gray-400 font-mono">via {update.provider}</span>
         )}
       </div>
@@ -210,25 +211,21 @@ export const ProjectGroup: React.FC<ProjectGroupProps> = ({ project, forceExpand
             onChange={(e) => setNewUpdate({ ...newUpdate, status: e.target.value as Status })}
             className="w-full p-2 border rounded mb-2"
           >
-            <option value="Pending Update">Pending Update</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Review">Review</option>
-            <option value="Blocker">Blocker</option>
-            <option value="QA">QA</option>
-            <option value="IoT">IoT</option>
-            <option value="Live">Live</option>
+            {STATUSES.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
           </select>
           <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Add</button>
         </form>
-      )}
+      )
+      }
 
       {/* Column Headers */}
       <div className="grid grid-cols-12 gap-4 px-2 py-2 text-[10px] font-mono text-secondary uppercase tracking-widest opacity-60 border-b border-gray-200 mb-2">
         <div className="col-span-1">Status</div>
         <div className="col-span-2">Date</div>
         <div className="col-span-6">Latest Update</div>
-        <div className="col-span-2">Person</div>
+        <div className="col-span-2">PIC</div>
         <div className="col-span-1 text-right">State</div>
       </div>
 
@@ -270,6 +267,6 @@ export const ProjectGroup: React.FC<ProjectGroupProps> = ({ project, forceExpand
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };

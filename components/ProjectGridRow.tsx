@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { Project } from '../types';
+import { STATUSES } from '../constants';
 import { useProjects } from '../contexts/ProjectContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectHistory } from './ProjectHistory';
+import { Trash } from 'lucide-react';
 
 interface ProjectGridRowProps {
     project: Project;
 }
 
 export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
-    const { updateProject } = useProjects();
+    const { updateProject, deleteProject } = useProjects();
     const { user } = useAuth();
     const [isExpanded, setIsExpanded] = useState(false);
     const latestUpdate = project.updates[0];
@@ -46,11 +48,12 @@ export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
                 <div className="col-span-2 mt-1">
                     <select
                         value={project.status}
-                        onClick={(e) => e.stopPropagation()} // Prevent row expansion
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => handleStatusChange(e.target.value)}
-                        className="appearance-none bg-transparent text-[10px] uppercase tracking-wider font-bold text-black border border-black px-1.5 py-px cursor-pointer hover:bg-black hover:text-white transition-colors outline-none"
+                        disabled={!user}
+                        className={`appearance-none bg-transparent text-[10px] uppercase tracking-wider font-bold text-black border border-black px-1.5 py-px cursor-pointer hover:bg-black hover:text-white transition-colors outline-none ${!user ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-black' : ''}`}
                     >
-                        {['Pending Update', 'In Progress', 'Completed', 'Review', 'Blocker', 'QA', 'IoT', 'Live'].map(s => (
+                        {STATUSES.map(s => (
                             <option key={s} value={s}>{s}</option>
                         ))}
                     </select>
@@ -66,6 +69,18 @@ export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
                     <span className="text-[10px] font-mono text-gray-400">
                         {project.category}
                     </span>
+                    {user && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm('Delete project?')) deleteProject(project.id);
+                            }}
+                            className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                            title="Delete Project"
+                        >
+                            <Trash size={12} />
+                        </button>
+                    )}
                 </div>
             </div>
 
