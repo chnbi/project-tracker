@@ -4,6 +4,7 @@ import { useProjects } from '../contexts/ProjectContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Trash2, Edit2, X, Check } from 'lucide-react';
 import { STATUSES } from '../constants';
+import { NotionSelect } from './NotionSelect';
 
 interface ProjectHistoryProps {
   project: Project;
@@ -12,6 +13,12 @@ interface ProjectHistoryProps {
 export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
   const { addUpdate, deleteUpdate, editUpdate, updateProject, projects, customCategories } = useProjects();
   const { user } = useAuth();
+
+  // Derived Statuses
+  const allStatuses = useMemo(() => {
+    const used = new Set(projects.map(p => p.status));
+    return Array.from(new Set([...STATUSES, ...Array.from(used)])).sort();
+  }, [projects]);
 
   const [isAdding, setIsAdding] = useState(false);
 
@@ -102,27 +109,24 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
 
             {/* Col 3: Status (2 cols) */}
             <div className="col-span-2 mt-1">
-              <select
+              <NotionSelect
+                options={allStatuses}
                 value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value as Status)}
-                className="w-full bg-transparent text-[10px] uppercase font-bold border-none outline-none py-0 cursor-pointer appearance-none p-0 m-0"
-              >
-                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+                onChange={(val) => setNewStatus(val as Status)}
+                onAdd={(val) => setNewStatus(val as Status)}
+                placeholder="Status"
+              />
             </div>
 
             {/* Col 4: PIC (1 col) */}
             <div className="col-span-1 mt-1">
-              <input
-                list="pic-options-add"
+              <NotionSelect
+                options={allPics}
                 value={newPic}
-                onChange={(e) => setNewPic(e.target.value)}
-                className="w-full bg-transparent text-[10px] font-mono border-none outline-none py-0 text-gray-600 truncate placeholder:text-gray-400 p-0 m-0"
+                onChange={(val) => setNewPic(val as string)}
+                onAdd={(val) => setNewPic(val)}
                 placeholder="PIC"
               />
-              <datalist id="pic-options-add">
-                {allPics.map(p => <option key={p} value={p} />)}
-              </datalist>
             </div>
 
             {/* Col 5: Provider (1 col) */}
@@ -131,14 +135,16 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
             </div>
 
             {/* Col 6: Category (2 cols) */}
-            <div className="col-span-2 flex items-center gap-1 justify-end mt-1">
-              <select
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                className="w-full bg-transparent text-[10px] font-mono text-gray-500 text-right border-none outline-none py-0 cursor-pointer truncate appearance-none p-0 m-0"
-              >
-                {customCategories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+            <div className="col-span-2 flex items-center justify-end mt-1">
+              <div className="w-full">
+                <NotionSelect
+                  options={customCategories}
+                  value={newCategory}
+                  onChange={(val) => setNewCategory(val as string)}
+                  placeholder="Category"
+                  className="text-right"
+                />
+              </div>
             </div>
 
             {/* Actions Outside Row */}
@@ -194,37 +200,37 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
               {/* Col 3: Status (2 cols) */}
               <div className="col-span-2 mt-1">
                 {isEditing ? (
-                  <select
+                  <NotionSelect
+                    options={allStatuses}
                     value={editStatus}
-                    onChange={(e) => setEditStatus(e.target.value as Status)}
-                    className="w-full bg-transparent text-[10px] uppercase font-bold border-none outline-none py-0 cursor-pointer appearance-none p-0 m-0"
-                  >
-                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                    onChange={(val) => setEditStatus(val as Status)}
+                    onAdd={(val) => setEditStatus(val as Status)}
+                  />
                 ) : (
-                  <span className="text-[10px] uppercase font-bold text-gray-400 px-0 py-0 border-none">
-                    {update.status}
-                  </span>
+                  <NotionSelect
+                    options={allStatuses}
+                    value={update.status}
+                    onChange={() => { }}
+                    readOnly
+                    className="pointer-events-none"
+                  />
                 )}
               </div>
 
               {/* Col 4: PIC (1 col) */}
               <div className="col-span-1 mt-1">
                 {isEditing ? (
-                  <input
-                    list="pic-options-edit"
+                  <NotionSelect
+                    options={allPics}
                     value={editPic}
-                    onChange={(e) => setEditPic(e.target.value)}
-                    className="w-full bg-transparent text-[10px] font-mono border-none outline-none py-0 text-gray-600 p-0 m-0"
+                    onChange={(val) => setEditPic(val as string)}
+                    onAdd={(val) => setEditPic(val)}
                   />
                 ) : (
-                  <div className="font-mono text-[10px] text-gray-400 truncate py-0" title={update.person}>
+                  <div className="font-mono text-[10px] text-gray-400 truncate py-0 mt-1" title={update.person}>
                     {update.person}
                   </div>
                 )}
-                <datalist id="pic-options-edit">
-                  {allPics.map(p => <option key={p} value={p} />)}
-                </datalist>
               </div>
 
               {/* Col 5: Provider (1 col) */}

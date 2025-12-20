@@ -5,21 +5,29 @@ import { useProjects } from '../contexts/ProjectContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectHistory } from './ProjectHistory';
 import { Trash } from 'lucide-react';
+import { NotionSelect } from './NotionSelect';
 
 interface ProjectGridRowProps {
     project: Project;
 }
 
 export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
-    const { updateProject, deleteProject } = useProjects();
+    const { updateProject, deleteProject, projects } = useProjects();
     const { user } = useAuth();
     const [isExpanded, setIsExpanded] = useState(false);
+
+    // Derived Statuses
+    const allStatuses = React.useMemo(() => {
+        const used = new Set(projects.map(p => p.status));
+        return Array.from(new Set([...STATUSES, ...Array.from(used)])).sort();
+    }, [projects]);
+
     const latestUpdate = project.updates[0];
     const dateStr = latestUpdate ? latestUpdate.date : '—';
     const person = latestUpdate ? latestUpdate.person : 'Unknown';
 
     const handleStatusChange = (newStatus: string) => {
-        if (!user) return; // Read only for guests
+        if (!user) return;
         updateProject(project.id, { status: newStatus as any });
     };
 
@@ -45,18 +53,15 @@ export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
                 </div>
 
                 {/* Col 3: Status (2 cols) */}
-                <div className="col-span-2 mt-1">
-                    <select
+                <div className="col-span-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                    <NotionSelect
+                        options={allStatuses}
                         value={project.status}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        disabled={!user}
-                        className={`appearance-none bg-transparent text-[10px] uppercase tracking-wider font-bold text-black border border-black px-1.5 py-px cursor-pointer hover:bg-black hover:text-white transition-colors outline-none ${!user ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-black' : ''}`}
-                    >
-                        {STATUSES.map(s => (
-                            <option key={s} value={s}>{s}</option>
-                        ))}
-                    </select>
+                        onChange={(val) => handleStatusChange(val as string)}
+                        onAdd={(val) => handleStatusChange(val)}
+                        readOnly={!user}
+                        className="w-full"
+                    />
                 </div>
 
                 {/* Col 4: PIC (1 col) */}
