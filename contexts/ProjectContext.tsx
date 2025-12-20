@@ -76,6 +76,16 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  // Simple UUID v4 fallback
+  const uuidv4 = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const addProject = async (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string }) => {
     if (!user) {
       alert('You must be logged in to add a project.');
@@ -83,8 +93,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     try {
-      const projectId = crypto.randomUUID();
+      const projectId = uuidv4();
       const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+
+      console.log('Attempting to add project:', { projectId, userId: user.id, data });
 
       // 1. Insert Project
       const { error: projError } = await supabase.from('projects').insert({
@@ -96,7 +108,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         status: data.initialStatus
       });
 
-      if (projError) throw projError;
+      if (projError) {
+        console.error('Supabase Project Insert Error:', projError);
+        throw projError;
+      }
 
       // 2. Insert Initial Update
       const { error: upError } = await supabase.from('updates').insert({
@@ -107,14 +122,18 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         status: data.initialStatus
       });
 
-      if (upError) throw upError;
+      if (upError) {
+        console.error('Supabase Update Insert Error:', upError);
+        // Note: Project was created, but update failed. You might want to delete the project or warn user.
+        throw upError;
+      }
 
       // Optimistic update or refetch
-      fetchData(); // Simplest strategy for now
+      fetchData();
 
-    } catch (error) {
-      console.error('Error adding project:', error);
-      alert('Error adding project. See console.');
+    } catch (error: any) {
+      console.error('FULL Error adding project:', error);
+      alert(`Error adding project: ${error.message || JSON.stringify(error)}`);
     }
   };
 
