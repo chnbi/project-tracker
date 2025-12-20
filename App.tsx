@@ -87,7 +87,6 @@ const App: React.FC = () => {
     if (!selectedL2 || selectedL2 === 'all') return [];
 
     // 2. Project Type -> Dynamic SubCategories
-    // 2. Project Type -> Dynamic SubCategories
     if (selectedL1 === 'project') {
       // Filter projects by the selected Category first
       const categoryProjects = projects.filter(p => p.category === selectedL2);
@@ -342,79 +341,47 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newProject.category}
-            onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
-            placeholder="Category"
-            className="p-2 border bg-white text-sm w-1/2"
-            required
-          />
-          <input
-            type="text"
-            value={newProject.subCategory}
-            onChange={(e) => setNewProject({ ...newProject, subCategory: e.target.value })}
-            placeholder="Sub-category (Optional)"
-            className="p-2 border bg-white text-sm w-1/2"
-          />
-        </div>
-        <textarea
-          value={newProject.initialDescription}
-          onChange={(e) => setNewProject({ ...newProject, initialDescription: e.target.value })}
-          placeholder="Initial Update / Description"
-          className="p-2 border bg-white text-sm h-20 resize-none"
-          required
-        />
-        <div className="flex justify-end gap-3 mt-2">
-          <button type="button" onClick={() => setShowAddProject(false)} className="text-xs text-gray-500 hover:text-black uppercase">Cancel</button>
-          <button type="submit" className="text-xs bg-black text-white px-4 py-2 hover:bg-gray-800 uppercase">Create</button>
-        </div>
-      </form>
-    </div>
-  )
-}
 
-{/* Tree Navigation */ }
-<div className="relative overflow-x-auto no-scrollbar pb-8">
-  <div className="flex flex-nowrap gap-[120px] min-w-max relative">
-    <div className="relative">
-      <FilterColumn title="Type" items={level1Items} selectedId={selectedL1} onSelect={handleL1Select} levelIndex={0} />
-      <ConnectorLine fromIndex={getIndex(level1Items, selectedL1)} toIndex={getIndex(level2Items, selectedL2)} isActive={level2Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
-    </div>
-    {level2Items.length > 0 && (
-      <div className="relative">
-        <FilterColumn
-          title="Category"
-          items={level2Items}
-          selectedId={selectedL2}
-          onSelect={handleL2Select}
-          levelIndex={1}
-          onAdd={level1Items[0]?.id === 'all' || selectedL1 === 'project' ? addCategory : undefined}
-        />
-        <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
-      </div>
-    )}
-    {level3Items.length > 0 && selectedL2 && selectedL2 !== 'all' && (
-      <div className="relative">
-        <FilterColumn
-          title="Sub-item"
-          items={level3Items}
-          selectedId={selectedL3}
-          onSelect={setSelectedL3}
-          levelIndex={2}
-          onAdd={selectedL1 === 'project' ? (name) => addSubCategory(selectedL2, name) : undefined}
-        />
-      </div>
-    )}
-  </div>
-</div>
-      </header >
+        {/* Tree Navigation */}
+        <div className="relative overflow-x-auto no-scrollbar pb-8">
+          <div className="flex flex-nowrap gap-[120px] min-w-max relative">
+            <div className="relative">
+              <FilterColumn title="Type" items={level1Items} selectedId={selectedL1} onSelect={handleL1Select} levelIndex={0} />
+              <ConnectorLine fromIndex={getIndex(level1Items, selectedL1)} toIndex={getIndex(level2Items, selectedL2)} isActive={level2Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+            </div>
+            {level2Items.length > 0 && (
+              <div className="relative">
+                <FilterColumn
+                  title="Category"
+                  items={level2Items}
+                  selectedId={selectedL2}
+                  onSelect={handleL2Select}
+                  levelIndex={1}
+                  onAdd={level1Items[0]?.id === 'all' || selectedL1 === 'project' ? addCategory : undefined}
+                />
+                <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+              </div>
+            )}
+            {level3Items.length > 0 && selectedL2 && selectedL2 !== 'all' && (
+              <div className="relative">
+                <FilterColumn
+                  title="Sub-item"
+                  items={level3Items}
+                  selectedId={selectedL3}
+                  onSelect={setSelectedL3}
+                  levelIndex={2}
+                  onAdd={selectedL1 === 'project' ? (name) => addSubCategory(selectedL2, name) : undefined}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
 
-  {/* Main Content: Grid List */ }
-  < main className = "max-w-6xl mx-auto" >
-    {/* Search Bar - Significantly smaller and tighter */ }
-    < div className = "relative mb-6 group w-full max-w-xs ml-auto mr-0" >
+      {/* Main Content: Grid List */}
+      <main className="max-w-6xl mx-auto">
+        {/* Search Bar - Significantly smaller and tighter */}
+        <div className="relative mb-6 group w-full max-w-xs ml-auto mr-0">
           <input
             type="text"
             placeholder="Search projects..."
@@ -423,35 +390,33 @@ const App: React.FC = () => {
             className="w-full bg-transparent border-b border-gray-200 py-1 text-sm font-normal focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
           />
           <Search className="absolute right-0 top-1.5 w-4 h-4 text-gray-300 group-focus-within:text-black transition-colors" />
-        </div >
+        </div>
 
-  {/* List Header */ }
-  < div className = "grid grid-cols-12 gap-x-4 pb-4 border-b border-black mb-0 text-[10px] uppercase tracking-widest text-black font-bold" >
+        {/* List Header */}
+        <div className="grid grid-cols-12 gap-x-4 pb-4 border-b border-black mb-0 text-[10px] uppercase tracking-widest text-black font-bold">
           <div className="col-span-1">Date</div>
           <div className="col-span-5">Project</div>
           <div className="col-span-2">Status</div>
           <div className="col-span-2">PIC</div>
           <div className="col-span-2 text-right">Category</div>
-        </div >
+        </div>
 
-  {/* Projects List */ }
-  < div className = "w-full" >
-  {
-    filteredProjects.length > 0 ? (
-      <div className="flex flex-col">
-        {filteredProjects.map((project) => (
-          <ProjectGridRow key={project.id} project={project} />
-        ))}
-      </div>
-    ) : (
-      <div className="py-20 text-gray-400 text-sm font-mono text-center">
-        [ Empty ]
-      </div>
-    )
-  }
-        </div >
-      </main >
-    </div >
+        {/* Projects List */}
+        <div className="w-full">
+          {filteredProjects.length > 0 ? (
+            <div className="flex flex-col">
+              {filteredProjects.map((project) => (
+                <ProjectGridRow key={project.id} project={project} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-20 text-gray-400 text-sm font-mono text-center">
+              [ Empty ]
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 };
 
