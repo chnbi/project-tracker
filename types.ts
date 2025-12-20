@@ -5,6 +5,7 @@ export interface Update {
   date: string;
   description: string;
   person: string;
+  provider?: string;
   status: Status;
 }
 
@@ -43,14 +44,16 @@ export interface AuthContextType {
 
 export interface ProjectContextType {
   projects: Project[];
-  addProject: (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string }) => void;
+  addProject: (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string, initialPic?: string }) => void;
   updateProject: (id: string, data: Partial<Project>) => void;
   deleteProject: (id: string) => void;
-  addUpdate: (projectId: string, updateData: Omit<Update, 'id' | 'date'>) => void;
+  addUpdate: (projectId: string, updateData: Omit<Update, 'id' | 'date' | 'provider'>) => void;
   editUpdate: (projectId: string, updateId: string, data: Partial<Update>) => void;
   deleteUpdate: (projectId: string, updateId: string) => void;
   customCategories: string[];
   addCategory: (category: string) => void;
+  renameCategory: (oldName: string, newName: string) => void;
+  deleteCategory: (name: string) => void;
   customSubCategories: Record<string, string[]>;
   addSubCategory: (category: string, subCategory: string) => void;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FilterNode } from '../types';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash } from 'lucide-react';
 
 interface FilterColumnProps {
   title: string;
@@ -9,6 +9,8 @@ interface FilterColumnProps {
   onSelect: (id: string) => void;
   levelIndex: number;
   onAdd?: (name: string) => void;
+  onRename?: (id: string, newName: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export const FilterColumn: React.FC<FilterColumnProps> = ({
@@ -16,10 +18,14 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
   items,
   selectedId,
   onSelect,
-  onAdd
+  onAdd,
+  onRename,
+  onDelete
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +33,19 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
       onAdd(newName.trim());
       setNewName('');
       setIsAdding(false);
+    }
+  };
+
+  const startRename = (id: string, currentLabel: string) => {
+    setRenamingId(id);
+    setRenameValue(currentLabel);
+  };
+
+  const handleRenameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (renamingId && renameValue.trim() && onRename) {
+      onRename(renamingId, renameValue.trim());
+      setRenamingId(null);
     }
   };
 
@@ -62,20 +81,45 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
 
         {items.map((item, index) => {
           const isSelected = selectedId === item.id;
+          const isRenaming = renamingId === item.id;
+
+          if (isRenaming) {
+            return (
+              <form key={item.id} onSubmit={handleRenameSubmit} className="h-8 flex items-center px-0">
+                <input
+                  value={renameValue}
+                  onChange={e => setRenameValue(e.target.value)}
+                  className="w-full text-xs py-0.5 border-b border-black outline-none bg-transparent font-mono"
+                  autoFocus
+                  onBlur={() => setRenamingId(null)}
+                />
+              </form>
+            )
+          }
+
           return (
-            <button
-              key={item.id}
-              onClick={() => onSelect(item.id)}
-              className={`
-                flex items-center text-left text-sm px-0 transition-all duration-200 h-8 hover:opacity-100 group
-                ${isSelected ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}
-              `}
-            >
-              <span className={`text-[10px] w-6 font-mono transition-opacity ${isSelected ? 'text-black' : 'text-gray-400 group-hover:text-black'}`}>
-                {(index + 1).toString().padStart(2, '0')}
-              </span>
-              <span className={`${isSelected ? 'text-black' : 'text-black/80'}`}>{item.label}</span>
-            </button>
+            <div key={item.id} className="group flex items-center h-8 relative pr-8">
+              <button
+                onClick={() => onSelect(item.id)}
+                className={`
+                    flex items-center text-left text-sm px-0 transition-all duration-200 w-full
+                    ${isSelected ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}
+                `}
+              >
+                <span className={`text-[10px] w-6 font-mono transition-opacity ${isSelected ? 'text-black' : 'text-gray-400 group-hover:text-black'}`}>
+                  {(index + 1).toString().padStart(2, '0')}
+                </span>
+                <span className={`${isSelected ? 'text-black' : 'text-black/80'}`}>{item.label}</span>
+              </button>
+
+              {/* Actions (Only if handlers provided, which means Auth) */}
+              {onRename && onDelete && item.id !== 'all' && (
+                <div className="absolute right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background">
+                  <button onClick={() => startRename(item.id, item.label)} className="text-gray-300 hover:text-black"><Pencil size={10} /></button>
+                  <button onClick={() => { if (confirm('Delete category?')) onDelete(item.id) }} className="text-gray-300 hover:text-red-500"><Trash size={10} /></button>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

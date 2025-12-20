@@ -42,6 +42,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
           date: u.date,
           description: u.description,
           person: u.person,
+          provider: u.provider, // Fetch provider
           status: u.status as Status
         })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort updates desc
       }));
@@ -86,7 +87,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const addProject = async (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string }) => {
+  const addProject = async (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string, initialPic?: string }) => {
     if (!user) {
       alert('You must be logged in to add a project.');
       return;
@@ -118,7 +119,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         project_id: projectId,
         date: today,
         description: data.initialDescription || 'Project initiated',
-        person: user.name,
+        person: data.initialPic || user.name, // Use provided PIC or fallback to user
+        provider: user.name, // Record who created it
         status: data.initialStatus
       });
 
@@ -164,7 +166,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const addUpdate = async (projectId: string, updateData: Omit<Update, 'id' | 'date'>) => {
+  const addUpdate = async (projectId: string, updateData: Omit<Update, 'id' | 'date' | 'provider'>) => {
+    if (!user) return; // Guard 
+
     try {
       const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
 
@@ -172,7 +176,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         project_id: projectId,
         date: today,
         description: updateData.description,
-        person: updateData.person,
+        person: updateData.person, // The PIC
+        provider: user.name, // The logged in user
         status: updateData.status
       });
 
@@ -210,10 +215,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const addCategory = async (category: string) => {
-    if (!user) return; // Only auth users can add meta
+    if (!user) return;
     // Optimistic update
     if (!customCategories.includes(category)) {
-      setCustomCategories(prev => [...prev, category]);
+      setCustomCategories(prev => [...prev, category].sort());
       try {
         const { error } = await supabase.from('categories').insert({
           name: category,
@@ -224,6 +229,56 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.error("Error adding category", e);
         fetchData(); // Revert on error
       }
+    }
+  };
+
+  const renameCategory = async (oldName: string, newName: string) => {
+    if (!user) return;
+
+    // Optimistic
+    setCustomCategories(prev => prev.map(c => c === oldName ? newName : c).sort());
+
+    try {
+      // 1. Update Category Table
+      const { error: catError } = await supabase
+        .from('categories')
+        .update({ name: newName })
+        .eq('name', oldName);
+
+      if (catError) throw catError;
+
+      // 2. Update Projects that use this category (Supabase might cascade if FK, but likely logic needed)
+      // Since we store category as string in projects table (denormalized usually or simple column), update it.
+      await supabase.from('projects').update({ category: newName }).eq('category', oldName);
+
+      // Re-fetch to sync
+      fetchData();
+
+    } catch (e) {
+      console.error("Error renaming category", e);
+      fetchData();
+    }
+  };
+
+  const deleteCategory = async (name: string) => {
+    if (!user) return;
+
+    if (!confirm(`Are you sure you want to delete category "${name}"? Projects using it might lose their category.`)) return;
+
+    // Optimistic
+    setCustomCategories(prev => prev.filter(c => c !== name));
+
+    try {
+      const { error } = await supabase.from('categories').delete().eq('name', name);
+      if (error) throw error;
+
+      // Projects with this category might need handling? 
+      // Ideally set to 'Uncategorized' or leave as is (broken link). 
+      // Let's assume user knows risks or we just leave them.
+
+    } catch (e) {
+      console.error("Error deleting category", e);
+      fetchData();
     }
   };
 
@@ -259,6 +314,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteUpdate,
       customCategories,
       addCategory,
+      renameCategory,
+      deleteCategory,
       customSubCategories,
       addSubCategory
     }}>

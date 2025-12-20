@@ -12,14 +12,14 @@ const ROW_HEIGHT = 32;
 const COL_GAP = 120;
 
 const App: React.FC = () => {
-  const { projects, addProject, customCategories, addCategory, customSubCategories, addSubCategory } = useProjects();
+  const { projects, addProject, customCategories, addCategory, customSubCategories, addSubCategory, renameCategory, deleteCategory } = useProjects();
   const { user, login, logout } = useAuth();
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>(''); // Default: All
   const [selectedL3, setSelectedL3] = useState<string>(''); // Default: All
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddProject, setShowAddProject] = useState(false);
-  const [newProject, setNewProject] = useState({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '' });
+  const [newProject, setNewProject] = useState({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
   const [showLogin, setShowLogin] = useState(false);
   const [loginForm, setLoginForm] = useState({ name: '', email: '' });
 
@@ -27,7 +27,7 @@ const App: React.FC = () => {
     e.preventDefault();
     addProject(newProject);
     setShowAddProject(false);
-    setNewProject({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '' });
+    setNewProject({ name: '', category: '', subCategory: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -53,7 +53,10 @@ const App: React.FC = () => {
       const projectFilterNode = FILTERS.find(f => f.id === 'project');
       const staticChildren = projectFilterNode?.children || [];
 
-      return [{ id: 'all', label: 'All' }, ...uniqueCategories.map(cat => {
+      // Always include all customCategories even if unused
+      const allCategoryNames = Array.from(new Set([...mergedCategories, ...uniqueCategories, ...customCategories])).sort();
+
+      return [{ id: 'all', label: 'All' }, ...allCategoryNames.map(cat => {
         const staticMatch = staticChildren.find(c => c.id === cat);
         return {
           id: cat,
@@ -220,8 +223,10 @@ const App: React.FC = () => {
               </button>
             )}
             <button onClick={() => setShowAddProject(!showAddProject)} className="flex items-center gap-2 hover:text-black text-gray-500 transition-colors">
-              <Plus size={14} /> New
+              <Plus size={14} /> {user ? 'New' : ''}
             </button>
+            {/* If !user, show nothing or maybe just disabled? Requirement says HIDE. */}
+            {!user && <span className="text-gray-300 text-xs italic">Read Only</span>}
           </div>
         </div>
 
@@ -299,14 +304,22 @@ const App: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="space-y-1 w-1/3">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Category</label>
-                    <input
-                      type="text"
-                      value={newProject.category}
-                      onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
-                      placeholder="e.g. Design"
-                      className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        list="category-suggestions"
+                        type="text"
+                        value={newProject.category}
+                        onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                        placeholder="Select or Type..."
+                        className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                        required
+                      />
+                      <datalist id="category-suggestions">
+                        {customCategories.map(cat => (
+                          <option key={cat} value={cat} />
+                        ))}
+                      </datalist>
+                    </div>
                   </div>
                   <div className="space-y-1 w-1/3">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Sub-category</label>
@@ -330,6 +343,18 @@ const App: React.FC = () => {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Initial PIC</label>
+                  <input
+                    type="text"
+                    value={newProject.initialPic}
+                    onChange={(e) => setNewProject({ ...newProject, initialPic: e.target.value })}
+                    placeholder="Who is starting this?"
+                    className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -370,6 +395,8 @@ const App: React.FC = () => {
                   onSelect={handleL2Select}
                   levelIndex={1}
                   onAdd={level1Items[0]?.id === 'all' || selectedL1 === 'project' ? addCategory : undefined}
+                  onRename={selectedL1 === 'project' && user ? renameCategory : undefined}
+                  onDelete={selectedL1 === 'project' && user ? deleteCategory : undefined}
                 />
                 <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
               </div>
