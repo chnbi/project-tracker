@@ -178,7 +178,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const updates: any = {};
       if (data.description) updates.description = data.description;
       if (data.status) updates.status = data.status;
-      // Person usually doesn't change history but we can support it
+      if (data.person) updates.person = data.person;
 
       const { error } = await supabase.from('updates').update(updates).eq('id', updateId);
       if (error) throw error;
