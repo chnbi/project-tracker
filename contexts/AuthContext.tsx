@@ -1,34 +1,56 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthContextType } from '../types';
-import { storage } from '../utils/storage';
-
-const AUTH_KEY = 'minusone_auth';
+import { supabase } from '../utils/supabaseClient';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = storage.get<User | null>(AUTH_KEY, null);
-    if (storedUser) {
-      setUser(storedUser);
-    }
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.email?.split('@')[0] || 'User'
+        });
+      }
+      setLoading(false);
+    });
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.email?.split('@')[0] || 'User'
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (name: string, email: string) => {
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      name,
-      email
-    };
-    setUser(newUser);
-    storage.set(AUTH_KEY, newUser);
+  const login = async (name: string, email: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) throw error;
+      alert('Check your email for the login link!');
+    } catch (error) {
+      console.error('Error logging in:', error);
+      alert('Error logging in. See console.');
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    storage.remove(AUTH_KEY);
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (

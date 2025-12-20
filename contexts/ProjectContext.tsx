@@ -1,10 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Project, ProjectContextType, Status, Update } from '../types';
-import { storage } from '../utils/storage';
-import { PROJECTS as SEED_DATA } from '../constants';
+import { supabase } from '../utils/supabaseClient';
 import { useAuth } from './AuthContext';
-
-const DATA_KEY = 'minusone_data';
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
@@ -14,128 +11,222 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [customSubCategories, setCustomSubCategories] = useState<Record<string, string[]>>({});
   const { user } = useAuth();
 
-  // Initialize data
+  // Fetch data on mount or when user changes
   useEffect(() => {
-    const storedProjects = storage.get<Project[]>(DATA_KEY, []);
-    const storedCategories = storage.get<string[]>('minusone_categories', []);
-    const storedSubCategories = storage.get<Record<string, string[]>>('minusone_subcategories', {});
+    fetchData();
+  }, [user]);
 
-    if (storedProjects.length === 0) {
-      setProjects(SEED_DATA);
-      storage.set(DATA_KEY, SEED_DATA);
-    } else {
-      setProjects(storedProjects);
+  const fetchData = async () => {
+    try {
+      // 1. Fetch Projects & Updates
+      // Note: We need to join updates. Supabase returns nested data.
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          updates (*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (projectsError) throw projectsError;
+
+      // Map DB structure to our App structure
+      const formattedProjects: Project[] = (projectsData || []).map(p => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        subCategory: p.sub_category, // Map snake_case to camelCase
+        status: p.status as Status,
+        updates: (p.updates || []).map((u: any) => ({
+          id: u.id,
+          date: u.date,
+          description: u.description,
+          person: u.person,
+          status: u.status as Status
+        })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort updates desc
+      }));
+
+      setProjects(formattedProjects);
+
+      // 2. Fetch Categories
+      const { data: catData, error: catError } = await supabase
+        .from('categories')
+        .select('name');
+
+      if (catError) console.error('Error fetching categories:', catError);
+      else setCustomCategories((catData || []).map(c => c.name));
+
+      // 3. Fetch Subcategories
+      const { data: subCatData, error: subCatError } = await supabase
+        .from('subcategories')
+        .select('category_name, name');
+
+      if (subCatError) console.error('Error fetching subcategories:', subCatError);
+      else {
+        const subMap: Record<string, string[]> = {};
+        subCatData?.forEach(sc => {
+          if (!subMap[sc.category_name]) subMap[sc.category_name] = [];
+          subMap[sc.category_name].push(sc.name);
+        });
+        setCustomSubCategories(subMap);
+      }
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
-    setCustomCategories(storedCategories);
-    setCustomSubCategories(storedSubCategories);
-  }, []);
+  };
 
-  // Persist on change
-  useEffect(() => {
-    if (projects.length > 0) {
-      storage.set(DATA_KEY, projects);
+  const addProject = async (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string }) => {
+    if (!user) {
+      alert('You must be logged in to add a project.');
+      return;
     }
-  }, [projects]);
 
-  useEffect(() => {
-    storage.set('minusone_categories', customCategories);
-  }, [customCategories]);
+    try {
+      const projectId = crypto.randomUUID();
+      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
 
-  useEffect(() => {
-    storage.set('minusone_subcategories', customSubCategories);
-  }, [customSubCategories]);
+      // 1. Insert Project
+      const { error: projError } = await supabase.from('projects').insert({
+        id: projectId,
+        user_id: user.id,
+        name: data.name,
+        category: data.category,
+        sub_category: data.subCategory,
+        status: data.initialStatus
+      });
 
-  const addProject = (data: Omit<Project, 'id' | 'updates'> & { initialStatus: Status, initialDescription?: string }) => {
-    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+      if (projError) throw projError;
 
-    const newUpdate: Update = {
-      id: crypto.randomUUID(),
-      date: today,
-      description: data.initialDescription || 'Project initiated',
-      person: user?.name || 'Unknown',
-      status: data.initialStatus
-    };
+      // 2. Insert Initial Update
+      const { error: upError } = await supabase.from('updates').insert({
+        project_id: projectId,
+        date: today,
+        description: data.initialDescription || 'Project initiated',
+        person: user.name,
+        status: data.initialStatus
+      });
 
-    const newProject: Project = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      category: data.category,
-      subCategory: data.subCategory,
-      status: data.initialStatus,
-      updates: [newUpdate]
-    };
+      if (upError) throw upError;
 
-    setProjects(prev => [newProject, ...prev]);
+      // Optimistic update or refetch
+      fetchData(); // Simplest strategy for now
+
+    } catch (error) {
+      console.error('Error adding project:', error);
+      alert('Error adding project. See console.');
+    }
   };
 
-  const updateProject = (id: string, data: Partial<Project>) => {
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+  const updateProject = async (id: string, data: Partial<Project>) => {
+    try {
+      const updates: any = {};
+      if (data.name) updates.name = data.name;
+      if (data.category) updates.category = data.category;
+      if (data.subCategory) updates.sub_category = data.subCategory;
+      if (data.status) updates.status = data.status;
+
+      const { error } = await supabase.from('projects').update(updates).eq('id', id);
+      if (error) throw error;
+
+      fetchData();
+    } catch (error) {
+      console.error('Error updating project:', error);
+    }
   };
 
-  const deleteProject = (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+  const deleteProject = async (id: string) => {
+    try {
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) throw error;
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    }
   };
 
-  const addUpdate = (projectId: string, updateData: Omit<Update, 'id' | 'date'>) => {
-    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+  const addUpdate = async (projectId: string, updateData: Omit<Update, 'id' | 'date'>) => {
+    try {
+      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
 
-    const newUpdate: Update = {
-      id: crypto.randomUUID(),
-      date: today,
-      ...updateData
-    };
+      const { error } = await supabase.from('updates').insert({
+        project_id: projectId,
+        date: today,
+        description: updateData.description,
+        person: updateData.person,
+        status: updateData.status
+      });
 
-    setProjects(prev => prev.map(p => {
-      if (p.id === projectId) {
-        return {
-          ...p,
-          updates: [newUpdate, ...p.updates]
-        };
-      }
-      return p;
-    }));
+      if (error) throw error;
+      fetchData();
+    } catch (error) {
+      console.error('Error adding update:', error);
+    }
   };
 
-  const editUpdate = (projectId: string, updateId: string, data: Partial<Update>) => {
-    setProjects(prev => prev.map(p => {
-      if (p.id === projectId) {
-        return {
-          ...p,
-          updates: p.updates.map(u => u.id === updateId ? { ...u, ...data } : u)
-        };
-      }
-      return p;
-    }));
+  // Missing in previous context but needed for types
+  const editUpdate = async (projectId: string, updateId: string, data: Partial<Update>) => {
+    try {
+      const updates: any = {};
+      if (data.description) updates.description = data.description;
+      if (data.status) updates.status = data.status;
+      // Person usually doesn't change history but we can support it
+
+      const { error } = await supabase.from('updates').update(updates).eq('id', updateId);
+      if (error) throw error;
+      fetchData();
+    } catch (error) {
+      console.error('Error editing update:', error);
+    }
   };
 
-  const deleteUpdate = (projectId: string, updateId: string) => {
-    setProjects(prev => prev.map(p => {
-      if (p.id === projectId) {
-        return {
-          ...p,
-          updates: p.updates.filter(u => u.id !== updateId)
-        };
-      }
-      return p;
-    }));
+  const deleteUpdate = async (projectId: string, updateId: string) => {
+    try {
+      const { error } = await supabase.from('updates').delete().eq('id', updateId);
+      if (error) throw error;
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting update:', error);
+    }
   };
 
-
-
-  const addCategory = (category: string) => {
+  const addCategory = async (category: string) => {
+    if (!user) return; // Only auth users can add meta
+    // Optimistic update
     if (!customCategories.includes(category)) {
       setCustomCategories(prev => [...prev, category]);
+      try {
+        const { error } = await supabase.from('categories').insert({
+          name: category,
+          created_by: user.id
+        });
+        if (error) throw error;
+      } catch (e) {
+        console.error("Error adding category", e);
+        fetchData(); // Revert on error
+      }
     }
   };
 
-  const addSubCategory = (category: string, subCategory: string) => {
-    setCustomSubCategories(prev => {
-      const existing = prev[category] || [];
-      if (!existing.includes(subCategory)) {
-        return { ...prev, [category]: [...existing, subCategory] };
+  const addSubCategory = async (category: string, subCategory: string) => {
+    if (!user) return;
+
+    // Optimistic check
+    const existing = customSubCategories[category] || [];
+    if (!existing.includes(subCategory)) {
+      // Optimistic UI update could be complex with state, let's just push and fetch for safety for now or straightforward state
+      try {
+        const { error } = await supabase.from('subcategories').insert({
+          category_name: category,
+          name: subCategory,
+          created_by: user.id
+        });
+        if (error) throw error;
+        fetchData();
+      } catch (e) {
+        console.error("Error adding subcategory", e);
       }
-      return prev;
-    });
+    }
   };
 
   return (
