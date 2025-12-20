@@ -217,8 +217,8 @@ const App: React.FC = () => {
 
       {/* Header / Nav Tree */}
       <header className="mb-12">
-        <div className="flex justify-between items-start mb-12 border-b border-gray-100 pb-4">
-          <h1 className="text-2xl font-semibold tracking-tight">project tracker</h1>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 md:mb-12 border-b border-gray-100 pb-4">
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">project tracker</h1>
 
           <div className="flex items-center gap-6 text-sm">
             {user ? (
@@ -252,15 +252,13 @@ const App: React.FC = () => {
             <button onClick={() => setShowAddProject(!showAddProject)} className="flex items-center gap-2 hover:text-black text-gray-400 font-medium transition-colors">
               <Plus size={14} /> New Project
             </button>
-            {/* If !user, show nothing or maybe just disabled? Requirement says HIDE. */}
-            {!user && <span className="text-gray-300 text-xs italic">Read Only</span>}
           </div>
         </div>
 
         {/* Login Modal (Floating Popup) */}
         {showLogin && !user && (
-          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="bg-white border border-black p-8 w-full max-w-sm shadow-2xl relative">
+          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-end md:items-center justify-center">
+            <div className="bg-white border border-black p-6 md:p-8 w-full md:max-w-sm shadow-2xl relative rounded-t-2xl md:rounded-none">
               <button
                 onClick={() => setShowLogin(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-black"
@@ -305,8 +303,8 @@ const App: React.FC = () => {
 
         {/* New Project Modal (Floating Popup) */}
         {showAddProject && (
-          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="bg-white border border-black p-8 w-full max-w-md shadow-2xl relative">
+          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-end md:items-center justify-center overflow-y-auto">
+            <div className="bg-white border border-black p-6 md:p-8 w-full md:max-w-md shadow-2xl relative rounded-t-2xl md:rounded-none max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setShowAddProject(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-black"
@@ -397,8 +395,8 @@ const App: React.FC = () => {
         )}
 
         {/* Tree Navigation */}
-        <div className="relative overflow-x-auto no-scrollbar pb-8">
-          <div className="flex flex-nowrap gap-[120px] min-w-max relative">
+        <div className="relative overflow-x-auto no-scrollbar pb-4 md:pb-8">
+          <div className="flex flex-nowrap gap-8 md:gap-[120px] min-w-max relative">
             <div className="relative">
               <FilterColumn title="Type" items={level1Items} selectedId={selectedL1} onSelect={handleL1Select} levelIndex={0} />
               <ConnectorLine fromIndex={getIndex(level1Items, selectedL1)} toIndex={getIndex(level2Items, selectedL2)} isActive={level2Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
@@ -442,21 +440,21 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content: Grid List */}
-      <main className="max-w-6xl mx-auto">
-        {/* Search Bar - Significantly smaller and tighter */}
-        <div className="relative mb-6 group w-full max-w-xs ml-auto mr-0">
+      <main className="max-w-6xl mx-auto px-4 md:px-0">
+        {/* Search Bar */}
+        <div className="relative mb-6 group w-full md:max-w-xs md:ml-auto md:mr-0">
           <input
             type="text"
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent border-b border-gray-200 py-1 text-sm font-normal focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+            className="w-full bg-transparent border-b border-gray-200 py-2 md:py-1 text-sm font-normal focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
           />
-          <Search className="absolute right-0 top-1.5 w-4 h-4 text-gray-300 group-focus-within:text-black transition-colors" />
+          <Search className="absolute right-0 top-2 md:top-1.5 w-4 h-4 text-gray-300 group-focus-within:text-black transition-colors" />
         </div>
 
-        {/* List Header */}
-        <div className="grid grid-cols-12 gap-x-4 pb-4 border-b border-black mb-0 text-[10px] uppercase tracking-widest text-black font-bold">
+        {/* List Header - Hidden on mobile */}
+        <div className="hidden md:grid grid-cols-12 gap-x-4 pb-4 border-b border-black mb-0 text-[10px] uppercase tracking-widest text-black font-bold">
           <div className="col-span-1">Date</div>
           <div className="col-span-5">Project</div>
           <div className="col-span-2">Status</div>

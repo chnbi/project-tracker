@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ConnectorLineProps {
   fromIndex: number;
@@ -6,7 +6,7 @@ interface ConnectorLineProps {
   rowHeight: number;
   columnGap: number;
   isActive: boolean;
-  headerHeight?: number; // New prop for offset
+  headerHeight?: number;
 }
 
 export const ConnectorLine: React.FC<ConnectorLineProps> = ({
@@ -15,19 +15,28 @@ export const ConnectorLine: React.FC<ConnectorLineProps> = ({
   rowHeight,
   columnGap,
   isActive,
-  headerHeight = 56 // 12 (3rem/48px) + 2 (0.5rem/8px margin) approx = 56px.
+  headerHeight = 56
 }) => {
+  // Responsive gap detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const responsiveGap = isMobile ? 32 : columnGap; // gap-8 = 32px on mobile
+
   if (!isActive) return null;
 
-  // Calculate strict vertical centers based on index and fixed row height
-  // headerHeight (h-12 + mb-2) = 48px + 8px = 56px (Tailwind h-12 is 3rem=48px, mb-2 is 0.5rem=8px)
   const offset = 56;
-
   const startY = offset + (fromIndex * rowHeight) + (rowHeight / 2);
-  const endY = offset + (toIndex * rowHeight) + (rowHeight / 2); // Connects to first item level roughly
+  const endY = offset + (toIndex * rowHeight) + (rowHeight / 2);
 
-  const midX = columnGap / 2;
-  const endX = columnGap;
+  const midX = responsiveGap / 2;
+  const endX = responsiveGap;
 
   const path = `
     M 0 ${startY} 
@@ -38,7 +47,7 @@ export const ConnectorLine: React.FC<ConnectorLineProps> = ({
     <svg
       className="absolute top-0 left-full pointer-events-none z-0 overflow-visible"
       style={{
-        width: columnGap,
+        width: responsiveGap,
         height: Math.max(startY, endY) + 100,
       }}
     >
@@ -53,7 +62,6 @@ export const ConnectorLine: React.FC<ConnectorLineProps> = ({
           transition: 'd 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       />
-      {/* Add a dot at the start for visual anchor */}
       <circle
         cx="0"
         cy={startY}

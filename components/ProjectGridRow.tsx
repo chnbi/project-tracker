@@ -35,62 +35,64 @@ export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
         <>
             <div
                 onClick={() => setIsExpanded(!isExpanded)}
-                className={`group grid grid-cols-12 gap-x-4 py-3 border-t hover:border-black/30 transition-colors cursor-pointer items-start ${isExpanded ? 'border-black' : 'border-black/10'}`}
+                className={`group flex flex-col md:grid md:grid-cols-12 gap-2 md:gap-x-4 py-4 md:py-3 border-t hover:border-black/30 transition-colors cursor-pointer items-start ${isExpanded ? 'border-black' : 'border-black/10'}`}
             >
-                {/* Col 1: Date (1 col) */}
-                <div className="col-span-1 text-xs font-mono text-gray-400 mt-1 truncate">
+                {/* Mobile: Date above title | Desktop: Col 1 */}
+                <div className="text-xs font-mono text-gray-400 md:col-span-1 md:mt-1">
                     {dateStr}
                 </div>
 
-                {/* Col 2: Project (5 cols) - Expanded */}
-                <div className="col-span-5">
-                    <h3 className="text-sm font-medium text-black group-hover:underline decoration-1 underline-offset-4 transition-all">
+                {/* Title & Description - Col 2 on desktop */}
+                <div className="md:col-span-5">
+                    <h3 className="text-base md:text-sm font-semibold md:font-medium text-black group-hover:underline decoration-1 underline-offset-4 transition-all">
                         {project.name}
                     </h3>
-                    <p className="text-xs text-gray-400 mt-0.5 line-clamp-1 group-hover:text-gray-600 transition-colors">
+                    <p className="text-sm md:text-xs text-gray-500 md:text-gray-400 mt-1 md:mt-0.5 line-clamp-2 md:line-clamp-1 group-hover:text-gray-600 transition-colors">
                         {latestUpdate?.description || 'No updates'}
                     </p>
                 </div>
 
-                {/* Col 3: Status (2 cols) */}
-                <div className="col-span-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
-                    <NotionSelect
-                        options={allStatuses}
-                        value={project.status}
-                        onChange={(val) => handleStatusChange(val as string)}
-                        onAdd={(val) => handleStatusChange(val)}
-                        readOnly={!user}
-                        className="w-full"
-                    />
-                </div>
+                {/* Meta Row: Status, Category (+ PIC/Provider hidden on mobile) */}
+                <div className="flex items-center gap-3 mt-2 md:mt-0 md:contents w-full">
+                    {/* Status */}
+                    <div className="md:col-span-2 md:mt-0.5" onClick={(e) => e.stopPropagation()}>
+                        <NotionSelect
+                            options={allStatuses}
+                            value={project.status}
+                            onChange={(val) => handleStatusChange(val as string)}
+                            onAdd={(val) => handleStatusChange(val)}
+                            readOnly={!user}
+                        />
+                    </div>
 
-                {/* Col 4: PIC (1 col) */}
-                <div className="col-span-1 text-xs font-mono text-gray-400 mt-1 truncate" title={person}>
-                    {person}
-                </div>
+                    {/* PIC - Hidden on mobile */}
+                    <div className="hidden md:block md:col-span-1 text-xs font-mono text-gray-400 mt-1 truncate" title={person}>
+                        {person}
+                    </div>
 
-                {/* Col 5: Provider (1 col) */}
-                <div className="col-span-1 text-xs font-mono text-gray-400 mt-1 truncate" title={latestUpdate?.provider}>
-                    {latestUpdate?.provider || '—'}
-                </div>
+                    {/* Provider - Hidden on mobile */}
+                    <div className="hidden md:block md:col-span-1 text-xs font-mono text-gray-400 mt-1 truncate" title={latestUpdate?.provider}>
+                        {latestUpdate?.provider || '—'}
+                    </div>
 
-                {/* Col 5: Category (2 cols) - Right aligned */}
-                <div className="col-span-2 flex flex-col items-end gap-1 mt-1">
-                    <span className="text-[10px] font-mono text-gray-400">
-                        {project.category}
-                    </span>
-                    {user && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (confirm('Delete project?')) deleteProject(project.id);
-                            }}
-                            className="text-gray-300 hover:text-red-500 transition-colors p-1"
-                            title="Delete Project"
-                        >
-                            <Trash size={12} />
-                        </button>
-                    )}
+                    {/* Category + Delete */}
+                    <div className="ml-auto md:col-span-2 flex items-center gap-2 md:flex-col md:items-end md:gap-1">
+                        <span className="text-[10px] font-mono text-gray-400">
+                            {project.category}
+                        </span>
+                        {user && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm('Delete project?')) deleteProject(project.id);
+                                }}
+                                className="text-gray-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100"
+                                title="Delete Project"
+                            >
+                                <Trash size={12} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
