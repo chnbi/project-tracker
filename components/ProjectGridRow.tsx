@@ -59,9 +59,14 @@ export const ProjectGridRow: React.FC<ProjectGridRowProps> = ({ project }) => {
                     </select>
                 </div>
 
-                {/* Col 4: PIC (2 cols) */}
-                <div className="col-span-2 text-xs font-mono text-gray-400 mt-1">
+                {/* Col 4: PIC (1 col) */}
+                <div className="col-span-1 text-xs font-mono text-gray-400 mt-1 truncate" title={person}>
                     {person}
+                </div>
+
+                {/* Col 5: Provider (1 col) */}
+                <div className="col-span-1 text-xs font-mono text-gray-400 mt-1 truncate" title={latestUpdate?.provider}>
+                    {latestUpdate?.provider || '—'}
                 </div>
 
                 {/* Col 5: Category (2 cols) - Right aligned */}

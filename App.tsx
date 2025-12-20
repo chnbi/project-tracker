@@ -436,7 +436,8 @@ const App: React.FC = () => {
           <div className="col-span-1">Date</div>
           <div className="col-span-5">Project</div>
           <div className="col-span-2">Status</div>
-          <div className="col-span-2">PIC</div>
+          <div className="col-span-1">PIC</div>
+          <div className="col-span-1">Provider</div>
           <div className="col-span-2 text-right">Category</div>
         </div>
 
