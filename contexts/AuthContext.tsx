@@ -38,21 +38,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (name: string, email: string) => {
+  // Convert username to fake email for Supabase
+  const usernameToEmail = (username: string) => `${username.toLowerCase()}@projecttracker.local`;
+
+  const login = async (username: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const email = usernameToEmail(username);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        options: {
-          data: {
-            name: name
-          }
-        }
+        password,
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error logging in:', error);
+      alert(error.message || 'Invalid username or password');
+    }
+  };
+
+  const changePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
       });
       if (error) throw error;
-      alert('Check your email for the login link!');
-    } catch (error) {
-      console.error('Error logging in:', error);
-      alert('Error logging in. See console.');
+      alert('Password updated successfully!');
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      alert(error.message || 'Failed to change password');
     }
   };
 
@@ -61,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

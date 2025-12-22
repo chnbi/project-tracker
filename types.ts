@@ -37,8 +37,9 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
-  login: (name: string, email: string) => void;
+  login: (username: string, password: string) => void;
   logout: () => void;
+  changePassword: (newPassword: string) => Promise<void>;
 }
 
 export interface ProjectContextType {

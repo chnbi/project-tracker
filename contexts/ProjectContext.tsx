@@ -134,6 +134,15 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const { error } = await supabase.from('projects').update(updates).eq('id', id);
       if (error) throw error;
 
+      // If status changed, also update the latest update's status
+      if (data.status) {
+        const project = projects.find(p => p.id === id);
+        if (project && project.updates.length > 0) {
+          const latestUpdate = project.updates[0];
+          await supabase.from('updates').update({ status: data.status }).eq('id', latestUpdate.id);
+        }
+      }
+
       fetchData();
     } catch (error) {
       console.error('Error updating project:', error);
@@ -166,6 +175,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
 
       if (error) throw error;
+
+      // New update is always the latest - sync its status to the project
+      await supabase.from('projects').update({ status: updateData.status }).eq('id', projectId);
+
       fetchData();
     } catch (error) {
       console.error('Error adding update:', error);
@@ -182,6 +195,20 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       const { error } = await supabase.from('updates').update(updates).eq('id', updateId);
       if (error) throw error;
+
+      // Check if this is the latest update - if so, sync status to project
+      if (data.status) {
+        const project = projects.find(p => p.id === projectId);
+        if (project && project.updates.length > 0) {
+          // Find the latest update (first in array, assuming sorted by date desc)
+          const latestUpdate = project.updates[0];
+          if (latestUpdate.id === updateId) {
+            // This is the latest update, sync status to project
+            await supabase.from('projects').update({ status: data.status }).eq('id', projectId);
+          }
+        }
+      }
+
       fetchData();
     } catch (error) {
       console.error('Error editing update:', error);

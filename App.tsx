@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Plus, LogIn, Edit2, X, Check } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Search, Plus, LogIn, Edit2, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from './utils/supabaseClient';
 import { FILTERS } from './constants';
 import { useProjects } from './contexts/ProjectContext';
@@ -22,7 +22,7 @@ const App: React.FC = () => {
   const [showAddProject, setShowAddProject] = useState(false);
   const [newProject, setNewProject] = useState({ name: '', category: '', initialStatus: 'In Progress' as Status, initialDescription: '', initialPic: '' });
   const [showLogin, setShowLogin] = useState(false);
-  const [loginForm, setLoginForm] = useState({ name: '', email: '' });
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
 
   // Edit Name State
   const [isEditingName, setIsEditingName] = useState(false);
@@ -60,9 +60,9 @@ const App: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    login(loginForm.name, loginForm.email);
+    login(loginForm.username, loginForm.password);
     setShowLogin(false);
-    setLoginForm({ name: '', email: '' });
+    setLoginForm({ username: '', password: '' });
   };
 
   // -- Filter Logic --
@@ -95,9 +95,28 @@ const App: React.FC = () => {
 
     // 2. Dynamic Hierarchies
     if (selectedL1 === 'status') {
+      // Custom status order (workflow-based)
+      const STATUS_ORDER = [
+        'Backlog', 'In Progress', 'In Development', 'Pending Update',
+        'Review', 'QA', 'Blocker', 'Done', 'Completed', 'Live', 'Pushed to IoT', 'IoT'
+      ];
+
       const allStatuses = projects.map(p => p.status);
-      const uniqueStatuses = [...new Set(allStatuses)].sort();
-      return [{ id: 'all', label: 'All' }, ...uniqueStatuses.map(s => ({ id: s, label: s }))];
+      const uniqueStatuses = [...new Set(allStatuses)];
+
+      // Sort by custom order, unknown statuses go to end
+      const sortedStatuses = uniqueStatuses.sort((a, b) => {
+        const statusA = a as string;
+        const statusB = b as string;
+        const indexA = STATUS_ORDER.indexOf(statusA);
+        const indexB = STATUS_ORDER.indexOf(statusB);
+        if (indexA === -1 && indexB === -1) return statusA.localeCompare(statusB);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+
+      return [{ id: 'all', label: 'All' }, ...sortedStatuses.map(s => ({ id: s, label: s }))];
     }
 
     if (selectedL1 === 'person_filter') {
@@ -249,9 +268,11 @@ const App: React.FC = () => {
                 <LogIn size={14} /> Log in
               </button>
             )}
-            <button onClick={() => setShowAddProject(!showAddProject)} className="flex items-center gap-2 hover:text-black text-gray-400 font-medium transition-colors">
-              <Plus size={14} /> New Project
-            </button>
+            {user && (
+              <button onClick={() => setShowAddProject(!showAddProject)} className="flex items-center gap-2 hover:text-black text-gray-400 font-medium transition-colors">
+                <Plus size={14} /> New Project
+              </button>
+            )}
           </div>
         </div>
 
@@ -266,27 +287,27 @@ const App: React.FC = () => {
                 <Plus size={20} className="rotate-45" />
               </button>
 
-              <h2 className="text-sm font-bold mb-6 uppercase tracking-widest text-center">Authentication</h2>
+              <h2 className="text-sm font-bold mb-6 uppercase tracking-widest text-center">Log In</h2>
               <form onSubmit={handleLogin} className="flex flex-col gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Name</label>
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Username</label>
                   <input
                     type="text"
-                    value={loginForm.name}
-                    onChange={(e) => setLoginForm({ ...loginForm, name: e.target.value })}
+                    value={loginForm.username}
+                    onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
                     className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
-                    placeholder="Enter your name"
+                    placeholder="Enter your username"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Email</label>
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Password</label>
                   <input
-                    type="email"
-                    value={loginForm.email}
-                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                     className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
-                    placeholder="Enter your email"
+                    placeholder="Enter your password"
                     required
                   />
                 </div>
@@ -294,7 +315,7 @@ const App: React.FC = () => {
                   type="submit"
                   className="mt-4 bg-black text-white py-3 text-xs uppercase font-bold tracking-widest hover:bg-gray-800 transition-colors"
                 >
-                  Get Magic Link
+                  Sign In
                 </button>
               </form>
             </div>
@@ -394,49 +415,78 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Tree Navigation */}
-        <div className="relative overflow-x-auto no-scrollbar pb-4 md:pb-8">
-          <div className="flex flex-nowrap gap-8 md:gap-[120px] min-w-max relative">
-            <div className="relative">
-              <FilterColumn title="Type" items={level1Items} selectedId={selectedL1} onSelect={handleL1Select} levelIndex={0} />
-              <ConnectorLine fromIndex={getIndex(level1Items, selectedL1)} toIndex={getIndex(level2Items, selectedL2)} isActive={level2Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+        {/* Tree Navigation - Only show when logged in */}
+        {user && (
+          <>
+            <div className="relative overflow-x-auto no-scrollbar pb-4 md:pb-8">
+              <div className="flex flex-nowrap gap-8 md:gap-[120px] min-w-max relative">
+                <div className="relative">
+                  <FilterColumn title="Type" items={level1Items} selectedId={selectedL1} onSelect={handleL1Select} levelIndex={0} />
+                  <ConnectorLine fromIndex={getIndex(level1Items, selectedL1)} toIndex={getIndex(level2Items, selectedL2)} isActive={level2Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+                </div>
+                {level2Items.length > 0 && (
+                  <div className="relative">
+                    <FilterColumn
+                      title={selectedL1 === 'project' ? "Category" : "Item"}
+                      items={level2Items}
+                      selectedId={selectedL2}
+                      onSelect={handleL2Select}
+                      levelIndex={1}
+                      onAdd={selectedL1 === 'project' ? addCategory : undefined}
+                      onRename={
+                        (selectedL1 === 'project' && user) ? renameCategory :
+                          (selectedL1 === 'status' && user) ? renameStatus :
+                            (selectedL1 === 'person_filter' && user) ? renamePerson : undefined
+                      }
+                      onDelete={
+                        (selectedL1 === 'project' && user) ? deleteCategory :
+                          (selectedL1 === 'status' && user) ? deleteStatus :
+                            (selectedL1 === 'person_filter' && user) ? deletePerson : undefined
+                      }
+                    />
+                    <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+                  </div>
+                )}
+                {level3Items.length > 0 && selectedL2 && selectedL2 !== 'all' && (
+                  <div className="relative">
+                    <FilterColumn
+                      title="Project"
+                      items={level3Items}
+                      selectedId={selectedL3}
+                      onSelect={setSelectedL3}
+                      levelIndex={2}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-            {level2Items.length > 0 && (
-              <div className="relative">
-                <FilterColumn
-                  title={selectedL1 === 'project' ? "Category" : "Item"}
-                  items={level2Items}
-                  selectedId={selectedL2}
-                  onSelect={handleL2Select}
-                  levelIndex={1}
-                  onAdd={selectedL1 === 'project' ? addCategory : undefined}
-                  onRename={
-                    (selectedL1 === 'project' && user) ? renameCategory :
-                      (selectedL1 === 'status' && user) ? renameStatus :
-                        (selectedL1 === 'person_filter' && user) ? renamePerson : undefined
-                  }
-                  onDelete={
-                    (selectedL1 === 'project' && user) ? deleteCategory :
-                      (selectedL1 === 'status' && user) ? deleteStatus :
-                        (selectedL1 === 'person_filter' && user) ? deletePerson : undefined
-                  }
-                />
-                <ConnectorLine fromIndex={getIndex(level2Items, selectedL2)} toIndex={getIndex(level3Items, selectedL3)} isActive={level3Items.length > 0} rowHeight={ROW_HEIGHT} columnGap={COL_GAP} />
+
+            {/* Mobile Scroll Navigation */}
+            <div className="flex md:hidden items-center justify-between mt-2 mb-4 text-xs text-gray-400">
+              <span className="font-mono">Scroll to explore more</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('.overflow-x-auto');
+                    container?.scrollBy({ left: -150, behavior: 'smooth' });
+                  }}
+                  className="p-1.5 border border-gray-200 rounded hover:border-black hover:text-black transition-colors"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('.overflow-x-auto');
+                    container?.scrollBy({ left: 150, behavior: 'smooth' });
+                  }}
+                  className="p-1.5 border border-gray-200 rounded hover:border-black hover:text-black transition-colors"
+                >
+                  <ChevronRight size={14} />
+                </button>
               </div>
-            )}
-            {level3Items.length > 0 && selectedL2 && selectedL2 !== 'all' && (
-              <div className="relative">
-                <FilterColumn
-                  title="Project"
-                  items={level3Items}
-                  selectedId={selectedL3}
-                  onSelect={setSelectedL3}
-                  levelIndex={2}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
       </header>
 
       {/* Main Content: Grid List */}
@@ -465,7 +515,21 @@ const App: React.FC = () => {
 
         {/* Projects List */}
         <div className="w-full">
-          {filteredProjects.length > 0 ? (
+          {!user ? (
+            /* Login Gate - Show message for guests */
+            <div
+              onClick={() => setShowLogin(true)}
+              className="py-20 text-center cursor-pointer group"
+            >
+              <div className="inline-flex flex-col items-center gap-2 px-6 py-4 border border-dashed border-gray-300 rounded-lg hover:border-black hover:bg-gray-50 transition-all">
+                <LogIn size={24} className="text-gray-300 group-hover:text-black transition-colors" />
+                <p className="text-sm text-gray-400 group-hover:text-black transition-colors">
+                  Log in to view project details
+                </p>
+                <span className="text-xs text-gray-300">Click anywhere to sign in</span>
+              </div>
+            </div>
+          ) : filteredProjects.length > 0 ? (
             <div className="flex flex-col">
               {filteredProjects.map((project) => (
                 <ProjectGridRow key={project.id} project={project} />

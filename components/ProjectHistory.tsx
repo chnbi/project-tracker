@@ -174,91 +174,129 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
           const isEditing = editingId === update.id;
 
           return (
-            <div key={update.id} className={`group/item relative grid grid-cols-12 gap-x-4 text-xs items-start hover:bg-white/50 py-1 -mx-2 px-2 rounded ${isEditing ? 'bg-white/80' : ''}`}>
+            <div key={update.id} className={`group/item relative hover:bg-white/50 py-2 -mx-2 px-2 rounded ${isEditing ? 'bg-white/80' : ''}`}>
 
-              {/* Col 1: Date */}
-              <div className="col-span-1 font-mono text-gray-400 text-[10px] mt-1.5">
-                {update.date.slice(0, 5)}
-              </div>
+              {/* Mobile: Stacked layout | Desktop: 12-column grid matching project row */}
+              <div className="flex flex-col gap-1 md:grid md:grid-cols-12 md:gap-x-4 md:items-start">
 
-              {/* Col 2: Content (5 cols - Corrected from 4) */}
-              <div className="col-span-5">
-                {isEditing ? (
-                  <textarea
-                    value={editDesc}
-                    onChange={(e) => setEditDesc(e.target.value)}
-                    className="w-full bg-transparent border-b border-black outline-none min-h-[22px] text-xs resize-none py-1 leading-normal"
-                    autoFocus
-                  />
-                ) : (
-                  <p className="text-gray-600 font-normal leading-normal py-1 border-b border-transparent">
-                    {update.description}
-                  </p>
-                )}
-              </div>
+                {/* Date - Col 1 */}
+                <div className="font-mono text-gray-400 text-[10px] md:text-xs md:col-span-1">
+                  {update.date.slice(0, 5)}
+                </div>
 
-              {/* Col 3: Status (2 cols) */}
-              <div className="col-span-2 mt-1">
-                {isEditing ? (
-                  <NotionSelect
-                    options={allStatuses}
-                    value={editStatus}
-                    onChange={(val) => setEditStatus(val as Status)}
-                    onAdd={(val) => setEditStatus(val as Status)}
-                  />
-                ) : (
-                  <NotionSelect
-                    options={allStatuses}
-                    value={update.status}
-                    onChange={() => { }}
-                    readOnly
-                    className="pointer-events-none"
-                  />
-                )}
-              </div>
+                {/* Description - Col 5 */}
+                <div className="md:col-span-5">
+                  {isEditing ? (
+                    <textarea
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      className="w-full bg-transparent border-b border-black outline-none min-h-[22px] text-xs resize-none py-0.5 leading-normal"
+                      autoFocus
+                    />
+                  ) : (
+                    <p className="text-xs text-gray-600 font-normal leading-normal">
+                      {update.description}
+                    </p>
+                  )}
+                </div>
 
-              {/* Col 4: PIC (1 col) */}
-              <div className="col-span-1 mt-1">
-                {isEditing ? (
-                  <NotionSelect
-                    options={allPics}
-                    value={editPic}
-                    onChange={(val) => setEditPic(val as string)}
-                    onAdd={(val) => setEditPic(val)}
-                  />
-                ) : (
-                  <div className="font-mono text-[10px] text-gray-400 truncate py-0 mt-1" title={update.person}>
-                    {update.person}
+                {/* Mobile: Status + PIC left | Provider right */}
+                <div className="flex items-center gap-3 md:hidden">
+                  {/* Status - left aligned */}
+                  <div className="shrink-0">
+                    {isEditing ? (
+                      <NotionSelect
+                        options={allStatuses}
+                        value={editStatus}
+                        onChange={(val) => setEditStatus(val as Status)}
+                        onAdd={(val) => setEditStatus(val as Status)}
+                      />
+                    ) : (
+                      <NotionSelect
+                        options={allStatuses}
+                        value={update.status}
+                        onChange={() => { }}
+                        readOnly
+                        className="pointer-events-none"
+                      />
+                    )}
                   </div>
-                )}
-              </div>
-
-              {/* Col 5: Provider (1 col) */}
-              <div className="col-span-1 mt-1.5 font-mono text-[10px] text-gray-300 opacity-50 truncate py-0" title={update.provider}>
-                {update.provider || ''}
-              </div>
-
-              {/* Col 6: Category (2 cols) */}
-              <div className="col-span-2 text-right">
-              </div>
-
-              {/* ACTIONS OUTSIDE ROW */}
-              <div className="absolute right-[-60px] top-1 flex flex-row gap-2">
-                {isEditing ? (
-                  <>
-                    <button onClick={() => saveEdit(update.id)} className="text-black hover:bg-green-100 rounded-full p-1"><Check size={14} /></button>
-                    <button onClick={() => setEditingId(null)} className="text-gray-400 hover:bg-red-50 rounded-full p-1"><X size={14} /></button>
-                  </>
-                ) : (
-                  <div className="flex flex-row gap-2 opacity-0 group-hover/item:opacity-100">
-                    <button onClick={() => startEdit(update)} className="text-gray-300 hover:text-black p-1">
-                      <Edit2 size={10} />
-                    </button>
-                    <button onClick={() => deleteUpdate(project.id, update.id)} className="text-gray-300 hover:text-red-600 p-1">
-                      <Trash2 size={10} />
-                    </button>
+                  {/* PIC - left aligned */}
+                  <span className="font-mono text-xs text-gray-400">{update.person}</span>
+                  {/* Spacer - pushes provider to right */}
+                  <div className="flex-1" />
+                  {/* Provider - right aligned like category */}
+                  <span className="font-mono text-[10px] text-gray-400">{update.provider || '—'}</span>
+                  {/* Actions */}
+                  <div className="flex items-center gap-1">
+                    {isEditing ? (
+                      <>
+                        <button onClick={() => saveEdit(update.id)} className="text-green-600 hover:bg-green-100 rounded-full p-1"><Check size={12} /></button>
+                        <button onClick={() => setEditingId(null)} className="text-gray-400 hover:bg-red-50 rounded-full p-1"><X size={12} /></button>
+                      </>
+                    ) : (
+                      <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                        <button onClick={() => startEdit(update)} className="text-gray-300 hover:text-black p-1"><Edit2 size={10} /></button>
+                        <button onClick={() => deleteUpdate(project.id, update.id)} className="text-gray-300 hover:text-red-600 p-1"><Trash2 size={10} /></button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Desktop: Status - Col 2 */}
+                <div className="hidden md:block md:col-span-2">
+                  {isEditing ? (
+                    <NotionSelect
+                      options={allStatuses}
+                      value={editStatus}
+                      onChange={(val) => setEditStatus(val as Status)}
+                      onAdd={(val) => setEditStatus(val as Status)}
+                    />
+                  ) : (
+                    <NotionSelect
+                      options={allStatuses}
+                      value={update.status}
+                      onChange={() => { }}
+                      readOnly
+                      className="pointer-events-none"
+                    />
+                  )}
+                </div>
+
+                {/* Desktop: PIC - Col 1 */}
+                <div className="hidden md:block md:col-span-1 text-xs font-mono text-gray-400 truncate" title={update.person}>
+                  {isEditing ? (
+                    <NotionSelect
+                      options={allPics}
+                      value={editPic}
+                      onChange={(val) => setEditPic(val as string)}
+                      onAdd={(val) => setEditPic(val)}
+                    />
+                  ) : (
+                    update.person
+                  )}
+                </div>
+
+                {/* Desktop: Provider - Col 1 */}
+                <div className="hidden md:block md:col-span-1 text-xs font-mono text-gray-400 truncate" title={`by ${update.provider}`}>
+                  <span className="text-gray-300">by</span> {update.provider || '—'}
+                </div>
+
+                {/* Desktop: Actions - Col 2 */}
+                <div className="hidden md:flex md:col-span-2 items-center justify-end gap-1">
+                  {isEditing ? (
+                    <>
+                      <button onClick={() => saveEdit(update.id)} className="text-green-600 hover:bg-green-100 rounded-full p-1"><Check size={12} /></button>
+                      <button onClick={() => setEditingId(null)} className="text-gray-400 hover:bg-red-50 rounded-full p-1"><X size={12} /></button>
+                    </>
+                  ) : (
+                    <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                      <button onClick={() => startEdit(update)} className="text-gray-300 hover:text-black p-1"><Edit2 size={10} /></button>
+                      <button onClick={() => deleteUpdate(project.id, update.id)} className="text-gray-300 hover:text-red-600 p-1"><Trash2 size={10} /></button>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
           );

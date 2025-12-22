@@ -16,8 +16,9 @@ const getStatusColor = (status: string) => {
   if (s === 'In Progress' || s === 'In Development') return 'bg-yellow-400';
   if (s === 'Pending Update') return 'bg-orange-400';
   if (s === 'QA' || s === 'Review') return 'bg-purple-300';
-  if (s === 'IoT') return 'bg-blue-500';
-  if (s === 'Live' || s === 'Completed') return 'bg-green-500';
+  if (s === 'IoT' || s === 'Pushed to IoT') return 'bg-blue-500';
+  if (s === 'Live' || s === 'Completed' || s === 'Done') return 'bg-green-500';
+  if (s === 'Backlog') return 'bg-lime-300';
   return 'bg-gray-300';
 };
 
