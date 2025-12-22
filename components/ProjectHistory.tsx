@@ -93,11 +93,13 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
       {/* --- ADD FORM --- */}
       {isAdding ? (
         <div className="relative group">
-          <form onSubmit={handleAddSubmit} className="grid grid-cols-12 gap-x-4 px-0 py-2 items-start border-b border-black/5 mb-2">
-            <div className="col-span-1 text-[10px] font-mono text-gray-300 mt-1.5">New</div>
+          <form onSubmit={handleAddSubmit} className="flex flex-col gap-2 md:grid md:grid-cols-12 md:gap-x-4 px-0 py-2 items-start border-b border-black/5 mb-2">
 
-            {/* Col 2: Description (5 cols - Match Project Header) */}
-            <div className="col-span-5">
+            {/* Date placeholder */}
+            <div className="hidden md:block md:col-span-1 text-[10px] font-mono text-gray-300 mt-1.5">New</div>
+
+            {/* Description */}
+            <div className="md:col-span-5">
               <textarea
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
@@ -107,8 +109,31 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
               />
             </div>
 
-            {/* Col 3: Status (2 cols) */}
-            <div className="col-span-2 mt-1">
+            {/* Mobile: Status + PIC row | Desktop: separate cols */}
+            <div className="flex items-center gap-3 md:hidden">
+              <NotionSelect
+                options={allStatuses}
+                value={newStatus}
+                onChange={(val) => setNewStatus(val as Status)}
+                onAdd={(val) => setNewStatus(val as Status)}
+                placeholder="Status"
+              />
+              <NotionSelect
+                options={allPics}
+                value={newPic}
+                onChange={(val) => setNewPic(val as string)}
+                onAdd={(val) => setNewPic(val)}
+                placeholder="PIC"
+              />
+              <div className="flex-1" />
+              <span className="text-[10px] font-mono text-gray-400">{user?.name || '—'}</span>
+              {/* Mobile actions */}
+              <button type="submit" className="text-black hover:bg-green-100 rounded-full p-1"><Check size={14} /></button>
+              <button type="button" onClick={() => setIsAdding(false)} className="text-gray-400 hover:bg-red-50 rounded-full p-1"><X size={14} /></button>
+            </div>
+
+            {/* Desktop: Status (2 cols) */}
+            <div className="hidden md:block md:col-span-2 mt-1">
               <NotionSelect
                 options={allStatuses}
                 value={newStatus}
@@ -118,8 +143,8 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
               />
             </div>
 
-            {/* Col 4: PIC (1 col) */}
-            <div className="col-span-1 mt-1">
+            {/* Desktop: PIC (1 col) */}
+            <div className="hidden md:block md:col-span-1 mt-1">
               <NotionSelect
                 options={allPics}
                 value={newPic}
@@ -129,26 +154,13 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = ({ project }) => {
               />
             </div>
 
-            {/* Col 5: Provider (1 col) */}
-            <div className="col-span-1 text-[10px] font-mono text-gray-400 py-0 truncate mt-1.5">
+            {/* Desktop: Provider (1 col) */}
+            <div className="hidden md:block md:col-span-1 text-xs font-mono text-gray-400 truncate mt-1">
               {user?.name || '—'}
             </div>
 
-            {/* Col 6: Category (2 cols) */}
-            <div className="col-span-2 flex items-center justify-end mt-1">
-              <div className="w-full">
-                <NotionSelect
-                  options={customCategories}
-                  value={newCategory}
-                  onChange={(val) => setNewCategory(val as string)}
-                  placeholder="Category"
-                  className="text-right"
-                />
-              </div>
-            </div>
-
-            {/* Actions Outside Row */}
-            <div className="absolute right-[-60px] top-2 flex flex-row gap-2">
+            {/* Desktop: Actions (2 cols) */}
+            <div className="hidden md:flex md:col-span-2 items-center justify-end gap-2 mt-1">
               <button type="submit" className="text-black hover:bg-green-100 rounded-full p-1"><Check size={14} /></button>
               <button type="button" onClick={() => setIsAdding(false)} className="text-gray-400 hover:bg-red-50 rounded-full p-1"><X size={14} /></button>
             </div>

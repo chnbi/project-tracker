@@ -278,8 +278,8 @@ const App: React.FC = () => {
 
         {/* Login Modal (Floating Popup) */}
         {showLogin && !user && (
-          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-end md:items-center justify-center">
-            <div className="bg-white border border-black p-6 md:p-8 w-full md:max-w-sm shadow-2xl relative rounded-t-2xl md:rounded-none">
+          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-black p-6 md:p-8 w-full max-w-sm shadow-2xl relative">
               <button
                 onClick={() => setShowLogin(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-black"
