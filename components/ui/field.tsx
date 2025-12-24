@@ -1,3 +1,4 @@
+import * as React from "react"
 import { useMemo } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -179,7 +180,7 @@ function FieldError({
 
     const uniqueErrors = [
       ...new Map(errors.map((error) => [error?.message, error])).values(),
-    ]
+    ] as Array<{ message?: string } | undefined>
 
     if (uniqueErrors?.length == 1) {
       return uniqueErrors[0]?.message
