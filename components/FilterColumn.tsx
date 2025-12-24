@@ -52,12 +52,12 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
   return (
     <div className="flex flex-col min-w-[200px] relative">
       {/* Fixed height header */}
-      <div className="h-12 flex items-center justify-between mb-2 border-b border-black/10 pr-2 group/header">
-        <h3 className="text-xs font-bold text-black uppercase tracking-widest">{title}</h3>
+      <div className="h-12 flex items-center justify-between mb-2 border-b border-black/10 dark:border-white/20 pr-2 group/header">
+        <h3 className="text-xs font-bold uppercase tracking-widest">{title}</h3>
         {onAdd && (
           <button
             onClick={() => setIsAdding(!isAdding)}
-            className={`text-black/20 hover:text-black transition-colors ${isAdding ? 'text-black' : ''}`}
+            className={`text-black/20 dark:text-white/30 hover:text-black dark:hover:text-white transition-colors ${isAdding ? 'text-black dark:text-white' : ''}`}
             title="Add New"
           >
             <Plus size={14} />
@@ -71,7 +71,7 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full text-sm py-1 border-b border-black outline-none bg-transparent placeholder:text-black/20"
+              className="w-full text-sm py-1 border-b border-black dark:border-white outline-none bg-transparent placeholder:text-black/20 dark:placeholder:text-white/30"
               placeholder={`New ${title}...`}
               autoFocus
               onBlur={() => !newName && setIsAdding(false)}
@@ -103,13 +103,13 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
                 onClick={() => onSelect(item.id)}
                 className={`
                     flex items-center text-left text-sm px-0 transition-all duration-200 w-full
-                    ${isSelected ? 'opacity-100 font-bold' : 'opacity-40 hover:opacity-100'}
+                    ${isSelected ? 'opacity-100 font-bold' : 'opacity-100' /* Keep opacity 100 to let text color handle dimming */}
                 `}
               >
-                <span className={`text-[10px] w-6 font-mono transition-opacity ${isSelected ? 'text-black' : 'text-gray-400 group-hover:text-black'}`}>
+                <span className={`text-[10px] w-6 font-mono transition-opacity ${isSelected ? '' : 'text-gray-300 dark:text-gray-600'}`}>
                   {(index + 1).toString().padStart(2, '0')}
                 </span>
-                <span className={`${isSelected ? 'text-black' : 'text-black/80'}`}>{item.label}</span>
+                <span className={`${isSelected ? '' : 'text-gray-400 hover:text-black dark:text-gray-500 dark:hover:text-white transition-colors'}`}>{item.label}</span>
               </button>
 
               {/* Actions (Only if handlers provided, which means Auth) */}

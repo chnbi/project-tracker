@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Search, Plus, LogIn, Edit2, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, LogIn, Edit2, X, Check, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react';
 import { supabase } from './utils/supabaseClient';
 import { FILTERS } from './constants';
 import { useProjects } from './contexts/ProjectContext';
 import { useAuth } from './contexts/AuthContext';
+import { useTheme } from './contexts/ThemeContext';
 import { FilterNode, Project, Status } from './types';
 import { FilterColumn } from './components/FilterColumn';
 import { ConnectorLine } from './components/ConnectorLine';
@@ -15,6 +16,7 @@ const COL_GAP = 120;
 const App: React.FC = () => {
   const { projects, addProject, customCategories, addCategory, renameCategory, deleteCategory, renameStatus, deleteStatus, renamePerson, deletePerson, updateProviderName } = useProjects();
   const { user, login, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [selectedL1, setSelectedL1] = useState<string>('project');
   const [selectedL2, setSelectedL2] = useState<string>(''); // Default: All
   const [selectedL3, setSelectedL3] = useState<string>(''); // Default: All
@@ -236,10 +238,21 @@ const App: React.FC = () => {
 
       {/* Header / Nav Tree */}
       <header className="mb-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 md:mb-12 border-b border-gray-100 pb-4">
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">project tracker</h1>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 md:mb-12 border-b border-gray-100 dark:border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">project tracker</h1>
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded transition-colors"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <Sun size={16} className="text-gray-400" /> : <Moon size={16} className="text-gray-400" />}
+            </button>
+          </div>
 
           <div className="flex items-center gap-6 text-sm">
+
             {user ? (
               <>
                 {isEditingName ? (
@@ -542,6 +555,11 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="fixed bottom-4 right-4 text-[10px] font-mono text-gray-300 dark:text-gray-600">
+        V1.1.12
+      </footer>
     </div>
   );
 };

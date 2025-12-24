@@ -41,9 +41,9 @@
   --radius: 0rem;
 }
 
-/* Dark mode - Pure Inversion */
+/* Dark mode - Custom dark gray background */
 .dark {
-  --background: oklch(0 0 0);
+  --background: #121212;
   --foreground: oklch(1 0 0);
 
   --card: oklch(0 0 0);

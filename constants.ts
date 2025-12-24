@@ -9,12 +9,12 @@ export const FILTERS: FilterNode[] = [
 
 export const STATUSES = [
   'Backlog',
+  'Blocker',
   'Pending Update',
   'In Progress',
-  'Blocker',
   'QA',
-  'Pushed to IoT',
-  'Live',
+  'Deployed to IoT',
+  'PDC',
   'Done'
 ];
 

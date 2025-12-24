@@ -43,8 +43,17 @@ export const ConnectorLine: React.FC<ConnectorLineProps> = ({
     C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}
   `;
 
+  // Calculate path length for animation
+  const pathLength = Math.sqrt(
+    Math.pow(endX, 2) + Math.pow(endY - startY, 2)
+  );
+
+  // Generate unique key to force re-animation on selection change
+  const animationKey = `${fromIndex}-${toIndex}`;
+
   return (
     <svg
+      key={animationKey}
       className="absolute top-0 left-full pointer-events-none z-0 overflow-visible"
       style={{
         width: responsiveGap,
@@ -58,8 +67,11 @@ export const ConnectorLine: React.FC<ConnectorLineProps> = ({
         strokeOpacity="0.2"
         strokeWidth="1"
         vectorEffect="non-scaling-stroke"
+        strokeDasharray={pathLength}
+        strokeDashoffset={pathLength}
         style={{
-          transition: 'd 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'd 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          animation: 'drawLine 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards'
         }}
       />
       <circle
@@ -72,6 +84,16 @@ export const ConnectorLine: React.FC<ConnectorLineProps> = ({
           transition: 'cy 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       />
+      <style>{`
+        @keyframes drawLine {
+          from {
+            stroke-dashoffset: ${pathLength};
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+      `}</style>
     </svg>
   );
 };
