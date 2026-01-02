@@ -240,7 +240,7 @@ const App: React.FC = () => {
       <header className="mb-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 md:mb-12 border-b border-gray-100 dark:border-white/10 pb-4">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">project tracker</h1>
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">project tracker</h1>
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
@@ -363,44 +363,49 @@ const App: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="space-y-1 w-1/2">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Category</label>
-                    <div className="relative">
-                      <input
-                        list="category-suggestions"
-                        type="text"
-                        value={newProject.category}
-                        onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
-                        placeholder="Select or Type..."
-                        className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
-                        required
-                      />
-                      <datalist id="category-suggestions">
-                        {customCategories.map(cat => (
-                          <option key={cat} value={cat} />
-                        ))}
-                      </datalist>
-                    </div>
+                    <input
+                      list="category-suggestions"
+                      type="text"
+                      value={newProject.category}
+                      onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                      placeholder="Select or Type..."
+                      className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
+                      required
+                    />
+                    <datalist id="category-suggestions">
+                      {customCategories.map(cat => (
+                        <option key={cat} value={cat} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="space-y-1 w-1/2">
                     <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Status</label>
-                    <select
-                      value={newProject.initialStatus}
-                      onChange={(e) => setNewProject({ ...newProject, initialStatus: e.target.value as Status })}
-                      className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono appearance-none bg-white"
-                    >
-                      {['In Progress', 'Pending Update', 'Completed', 'Review', 'Blocker', 'QA', 'IoT', 'Live'].map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={newProject.initialStatus}
+                        onChange={(e) => setNewProject({ ...newProject, initialStatus: e.target.value as Status })}
+                        className="w-full p-2 pr-8 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono appearance-none bg-white"
+                      >
+                        {['In Progress', 'Pending Update', 'Completed', 'Review', 'Blocker', 'QA', 'IoT', 'Live'].map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Initial PIC</label>
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-gray-500">PIC</label>
                   <input
                     type="text"
                     value={newProject.initialPic}
                     onChange={(e) => setNewProject({ ...newProject, initialPic: e.target.value })}
-                    placeholder="Who is starting this?"
+                    placeholder="Who is responsible for this?"
                     className="w-full p-2 border border-gray-200 focus:border-black outline-none text-sm transition-colors font-mono"
                     required
                   />
@@ -517,7 +522,7 @@ const App: React.FC = () => {
         </div>
 
         {/* List Header - Hidden on mobile */}
-        <div className="hidden md:grid grid-cols-12 gap-x-4 pb-4 border-b border-black mb-0 text-[10px] uppercase tracking-widest text-black font-bold">
+        <div className="hidden md:grid grid-cols-12 gap-x-4 pb-4 border-b border-foreground/20 mb-0 text-[10px] uppercase tracking-widest text-foreground font-bold">
           <div className="col-span-1">Date</div>
           <div className="col-span-5">Project</div>
           <div className="col-span-2">Status</div>
@@ -558,7 +563,7 @@ const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="fixed bottom-4 right-4 text-[10px] font-mono text-gray-300 dark:text-gray-600">
-        V1.1.12
+        V1.2.0
       </footer>
     </div>
   );

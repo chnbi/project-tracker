@@ -106,17 +106,17 @@ export const FilterColumn: React.FC<FilterColumnProps> = ({
                     ${isSelected ? 'opacity-100 font-bold' : 'opacity-100' /* Keep opacity 100 to let text color handle dimming */}
                 `}
               >
-                <span className={`text-[10px] w-6 font-mono transition-opacity ${isSelected ? '' : 'text-gray-300 dark:text-gray-600'}`}>
+                <span className={`text-[10px] w-6 font-mono transition-opacity ${isSelected ? 'text-muted-foreground' : 'text-muted-foreground/50'}`}>
                   {(index + 1).toString().padStart(2, '0')}
                 </span>
-                <span className={`${isSelected ? '' : 'text-gray-400 hover:text-black dark:text-gray-500 dark:hover:text-white transition-colors'}`}>{item.label}</span>
+                <span className={`${isSelected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground transition-colors'}`}>{item.label}</span>
               </button>
 
               {/* Actions (Only if handlers provided, which means Auth) */}
               {onRename && onDelete && item.id !== 'all' && (
                 <div className="absolute right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background">
-                  <button onClick={() => startRename(item.id, item.label)} className="text-gray-300 hover:text-black"><Pencil size={10} /></button>
-                  <button onClick={() => { if (confirm('Delete category?')) onDelete(item.id) }} className="text-gray-300 hover:text-red-500"><Trash size={10} /></button>
+                  <button onClick={() => startRename(item.id, item.label)} className="text-muted-foreground/50 hover:text-foreground"><Pencil size={10} /></button>
+                  <button onClick={() => { if (confirm('Delete category?')) onDelete(item.id) }} className="text-muted-foreground/50 hover:text-red-500"><Trash size={10} /></button>
                 </div>
               )}
             </div>

@@ -1,42 +1,46 @@
-// Status-specific colors in the requested sequence
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-    'backlog': { bg: 'bg-gray-200', text: 'text-gray-700' },
-    'blocker': { bg: 'bg-red-100', text: 'text-red-700' },
-    'pending update': { bg: 'bg-orange-100', text: 'text-orange-700' },
-    'in progress': { bg: 'bg-yellow-100', text: 'text-yellow-700' },
-    'qa': { bg: 'bg-purple-100', text: 'text-purple-700' },
-    'deployed to iot': { bg: 'bg-blue-100', text: 'text-blue-700' },
-    'pushed to iot': { bg: 'bg-blue-100', text: 'text-blue-700' },
-    'pdc': { bg: 'bg-pink-100', text: 'text-pink-700' },
-    'done': { bg: 'bg-green-100', text: 'text-green-700' },
-    'completed': { bg: 'bg-green-100', text: 'text-green-700' },
-    'live': { bg: 'bg-green-100', text: 'text-green-700' },
+// Status-specific CSS classes
+// These classes are defined in index.css with proper light/dark mode colors
+const STATUS_CLASSES: Record<string, string> = {
+    'backlog': 'status-backlog',
+    'blocker': 'status-blocker',
+    'pending update': 'status-pending',
+    'in progress': 'status-progress',
+    'in development': 'status-progress',
+    'review': 'status-review',
+    'qa': 'status-qa',
+    'deployed to iot': 'status-iot',
+    'pushed to iot': 'status-iot',
+    'iot': 'status-iot',
+    'pdc': 'status-pdc',
+    'done': 'status-done',
+    'completed': 'status-done',
+    'live': 'status-done',
 };
 
-// Fallback colors for non-status strings (categories, PICs, etc.)
-const COLORS = [
-    { bg: 'bg-gray-200', text: 'text-gray-700' },
-    { bg: 'bg-orange-100', text: 'text-orange-700' },
-    { bg: 'bg-yellow-100', text: 'text-yellow-700' },
-    { bg: 'bg-green-100', text: 'text-green-700' },
-    { bg: 'bg-blue-100', text: 'text-blue-700' },
-    { bg: 'bg-purple-100', text: 'text-purple-700' },
-    { bg: 'bg-pink-100', text: 'text-pink-700' },
-    { bg: 'bg-red-100', text: 'text-red-700' },
+// Fallback classes for non-status strings (categories, PICs, etc.)
+const FALLBACK_CLASSES = [
+    'status-backlog',
+    'status-pending',
+    'status-review',
+    'status-done',
+    'status-progress',
+    'status-qa',
+    'status-pdc',
+    'status-blocker',
 ];
 
-export const getColorForString = (str: string) => {
-    if (!str) return COLORS[0];
+export const getColorForString = (str: string): { class: string } => {
+    if (!str) return { class: FALLBACK_CLASSES[0] };
 
-    // Check for status-specific color first (case-insensitive)
-    const statusColor = STATUS_COLORS[str.toLowerCase()];
-    if (statusColor) return statusColor;
+    // Check for status-specific class first (case-insensitive)
+    const statusClass = STATUS_CLASSES[str.toLowerCase()];
+    if (statusClass) return { class: statusClass };
 
-    // Fallback to hash-based color for other strings
+    // Fallback to hash-based class for other strings
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const index = Math.abs(hash) % COLORS.length;
-    return COLORS[index];
+    const index = Math.abs(hash) % FALLBACK_CLASSES.length;
+    return { class: FALLBACK_CLASSES[index] };
 };

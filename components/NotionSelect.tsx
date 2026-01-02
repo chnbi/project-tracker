@@ -84,13 +84,13 @@ export const NotionSelect: React.FC<NotionSelectProps> = ({
             {/* Trigger Area */}
             <div
                 onClick={() => !readOnly && setIsOpen(!isOpen)}
-                className={`flex flex-wrap items-center gap-1 p-1 min-h-[28px] cursor-pointer hover:bg-gray-50 transition-colors ${readOnly ? 'cursor-default' : ''}`}
+                className={`flex flex-wrap items-center gap-1 p-1 min-h-[28px] cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${readOnly ? 'cursor-default' : ''}`}
             >
                 {currentValues.length > 0 ? (
                     currentValues.map(val => {
-                        const colors = getColorForString(val);
+                        const colorClass = getColorForString(val);
                         return (
-                            <span key={val} className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium leading-4 ${colors.bg} ${colors.text} border border-transparent`}>
+                            <span key={val} className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium leading-4 ${colorClass.class} border border-transparent`}>
                                 {val}
                                 {!readOnly && multi && (
                                     <X
@@ -112,8 +112,11 @@ export const NotionSelect: React.FC<NotionSelectProps> = ({
 
             {/* Popover */}
             {isOpen && !readOnly && (
-                <div className="absolute top-full left-0 z-50 w-64 mt-1 bg-white rounded-md shadow-xl border border-gray-200 py-1 text-sm animate-in fade-in zoom-in-95 duration-100">
-                    <div className="px-2 pb-2 pt-1 border-b border-gray-100">
+                <div
+                    className="absolute top-full left-0 z-50 w-64 mt-1 rounded-md shadow-xl border border-transparent dark:border-gray-700 py-1 text-sm animate-in fade-in zoom-in-95 duration-100"
+                    style={{ backgroundColor: 'var(--background)' }}
+                >
+                    <div className="px-2 pb-2 pt-1 border-b border-transparent dark:border-gray-700">
                         <input
                             autoFocus
                             value={search}
@@ -126,26 +129,26 @@ export const NotionSelect: React.FC<NotionSelectProps> = ({
                                 }
                             }}
                             placeholder="Search or create..."
-                            className="w-full text-xs p-1.5 bg-gray-50 rounded border-none outline-none focus:ring-1 focus:ring-black/10 transition-shadow"
+                            className="w-full text-xs p-1.5 bg-secondary text-foreground rounded border-none dark:border dark:border-gray-600 outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 transition-shadow placeholder:text-muted-foreground"
                         />
                     </div>
 
                     <div className="max-h-60 overflow-y-auto py-1">
-                        <div className="px-2 py-1 text-[10px] uppercase font-bold text-gray-400 tracking-wider">Select an option</div>
+                        <div className="px-2 py-1 text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Select an option</div>
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map(option => {
                                 const isSelected = currentValues.includes(option.id);
-                                const colors = getColorForString(option.id);
+                                const colorClass = getColorForString(option.id);
 
                                 return (
                                     <div
                                         key={option.id}
                                         onClick={() => handleSelect(option.id)}
-                                        className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50/50' : ''}`}
+                                        className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-secondary transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-500/10' : ''}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <span className={`w-2 h-2 rounded-full ${colors.bg.replace('bg-', 'bg-')}`}></span> {/* Dot indicator */}
-                                            <span className={`px-2 py-0.5 rounded text-xs ${colors.bg} ${colors.text}`}>
+                                            <span className={`w-2 h-2 rounded-full ${colorClass.class}`}></span> {/* Dot indicator */}
+                                            <span className={`px-2 py-0.5 rounded text-xs ${colorClass.class}`}>
                                                 {option.label}
                                             </span>
                                         </div>
@@ -154,13 +157,13 @@ export const NotionSelect: React.FC<NotionSelectProps> = ({
                                 );
                             })
                         ) : (
-                            !showCreate && <div className="px-3 py-2 text-gray-400 text-xs italic">No matching options</div>
+                            !showCreate && <div className="px-3 py-2 text-gray-400 dark:text-gray-500 text-xs italic">No matching options</div>
                         )}
 
                         {showCreate && (
                             <div
                                 onClick={handleCreate}
-                                className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50 text-gray-600 border-t border-gray-50 mt-1"
+                                className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary text-muted-foreground border-t border-gray-100 dark:border-gray-700 mt-1"
                             >
                                 <Plus size={14} />
                                 <span>Create "{search}"</span>
